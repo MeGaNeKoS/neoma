@@ -40,10 +40,11 @@ Features include:
 - [Content negotiation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation) between server and client
   - Support for JSON ([RFC 8259](https://tools.ietf.org/html/rfc8259)) and optionally CBOR ([RFC 7049](https://tools.ietf.org/html/rfc7049)) content types via the `Accept` header
 - Conditional requests support, e.g. `If-Match` or `If-Unmodified-Since` header utilities
-- Optional automatic generation of `PATCH` operations that support:
-  - [RFC 7386](https://www.rfc-editor.org/rfc/rfc7386) JSON Merge Patch
+- `Link` header with `rel="describedBy"` and `$schema` field in response bodies ([RFC 8288](https://www.rfc-editor.org/rfc/rfc8288)), pointing to resolvable JSON Schema
+- Patch toolkit for partial updates ([RFC 5789](https://www.rfc-editor.org/rfc/rfc5789)):
+  - [RFC 7396](https://www.rfc-editor.org/rfc/rfc7396) JSON Merge Patch
   - [RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) JSON Patch
-  - [Shorthand](https://github.com/danielgtaylor/shorthand) patches
+  - Apply directly to JSON bytes, Go structs, or parse into operations for custom storage
 - Annotated Go types for input and output models
   - Generates JSON Schema from Go types
   - Static typing for path, query, header params, bodies, response headers, etc.

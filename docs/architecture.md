@@ -33,6 +33,7 @@ Neoma follows hexagonal architecture (ports and adapters). Domain logic and inte
 |  negotiate/         Content negotiation and format registry  |
 |  middleware/        Group routing and middleware             |
 |  errors/            Error model implementations              |
+|  patch/             RFC 6902/7396 patch toolkit              |
 |  sse/               Server-Sent Events                       |
 +--------------------------------------------------------------+
 |                     INNER RING                               |
@@ -91,6 +92,7 @@ No circular dependencies. `binding` imports `schema` directly. No runtime wiring
 | `neoma`              | Public facade: `NewAPI`, `Register`, `Get`/`Post`/etc. | Facade |
 | `neomacli`           | CLI wrapper using Cobra                                | Outer  |
 | `neomatest`          | In-memory test API with request helpers                | Outer  |
+| `patch`              | RFC 6902/7396 patch parsing and application            | Middle |
 | `sse`                | Server-Sent Events                                     | Outer  |
 | `adapters/*`         | Router-specific Context and Adapter implementations    | Outer  |
 | `formats/cbor`       | CBOR format (explicit registration, not side-effect)   | Outer  |
@@ -161,6 +163,8 @@ Non-obvious architectural choices are documented in `docs/decisions/`:
 | [Vendored Code](decisions/vendored-code.md)           | Small third-party snippets vendored to minimize dependencies         |
 | [SSE](decisions/sse.md)                               | Server-Sent Events via streaming response callback                   |
 | [Multi-Module](decisions/multi-module.md)             | Separate Go modules per adapter to isolate dependencies              |
+| [Schema Link Transformer](decisions/schema-link-transformer.md) | RFC 8288 `Link` header and `$schema` field on responses    |
+| [Patch Toolkit](decisions/patch-toolkit.md)           | Composable RFC 6902/7396 toolkit instead of auto-generation          |
 
 ## Adding a New Package
 
