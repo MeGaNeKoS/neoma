@@ -1,0 +1,24 @@
+# Binaries
+*.exe
+*.test
+*.out
+
+# Coverage
+*.cov
+*.html
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go workspace sum (generated)
+go.work.sum
+
+# Build artifacts
+/tmp/

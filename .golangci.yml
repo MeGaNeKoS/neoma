@@ -1,0 +1,41 @@
+version: "2"
+linters:
+  enable:
+    - errorlint
+    - dupword
+    - gocritic
+    - misspell
+    - musttag
+    - nilnil
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - staticcheck
+    - testifylint
+    - unconvert
+    - unparam
+    - wastedassign
+  disable:
+    - errcheck
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters: [nilnil]
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - yaml/
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
