@@ -1,7 +1,6 @@
 package patch
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/MeGaNeKoS/neoma/core"
@@ -138,7 +137,7 @@ func TestMergePatchInvalidJSON(t *testing.T) {
 		[]byte(`{`),
 	)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 // --- RFC 6902 JSON Patch ---
@@ -205,7 +204,7 @@ func TestJSONPatchTestFailsRollback(t *testing.T) {
 		[]byte(`[{"op":"test","path":"/a","value":"wrong"}]`),
 	)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 func TestJSONPatchSequentialOperations(t *testing.T) {
@@ -233,7 +232,7 @@ func TestJSONPatchInvalidJSON(t *testing.T) {
 		[]byte(`[`),
 	)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 func TestJSONPatchInvalidOperation(t *testing.T) {
@@ -242,7 +241,7 @@ func TestJSONPatchInvalidOperation(t *testing.T) {
 		[]byte(`[{"op":"unsupported"}]`),
 	)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 func TestJSONPatchRemoveNonexistent(t *testing.T) {
@@ -252,7 +251,7 @@ func TestJSONPatchRemoveNonexistent(t *testing.T) {
 		[]byte(`[{"op":"remove","path":"/nonexistent"}]`),
 	)
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 // --- ApplyTo (generic) ---
@@ -268,7 +267,7 @@ func TestApplyToMergePatch(t *testing.T) {
 
 	err := ApplyTo(ContentTypeMergePatch, thing, []byte(`{"price": 20.0}`))
 	require.NoError(t, err)
-	assert.Equal(t, 20.0, thing.Price)
+	assert.InDelta(t, 20.0, thing.Price, 0.01)
 	assert.Equal(t, "1", thing.ID)         // unchanged
 	assert.Equal(t, []string{"old"}, thing.Tags) // unchanged
 }
@@ -289,7 +288,7 @@ func TestApplyToDeleteField(t *testing.T) {
 	err := ApplyTo(ContentTypeMergePatch, thing, []byte(`{"tags": null}`))
 	require.NoError(t, err)
 	assert.Nil(t, thing.Tags)
-	assert.Equal(t, 10.0, thing.Price) // unchanged
+	assert.InDelta(t, 10.0, thing.Price, 0.01) // unchanged
 }
 
 func TestApplyToUnsupportedContentType(t *testing.T) {
@@ -297,7 +296,7 @@ func TestApplyToUnsupportedContentType(t *testing.T) {
 
 	err := ApplyTo("application/json", thing, []byte(`{}`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrUnsupportedContentType))
+	assert.ErrorIs(t, err, ErrUnsupportedContentType)
 	assert.Equal(t, "1", thing.ID) // unchanged on error
 }
 
@@ -306,8 +305,8 @@ func TestApplyToInvalidPatch(t *testing.T) {
 
 	err := ApplyTo(ContentTypeMergePatch, thing, []byte(`{`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
-	assert.Equal(t, 10.0, thing.Price) // unchanged on error
+	assert.ErrorIs(t, err, ErrInvalidPatch)
+	assert.InDelta(t, 10.0, thing.Price, 0.01) // unchanged on error
 }
 
 func TestApplyToNestedStruct(t *testing.T) {
@@ -333,13 +332,13 @@ func TestApplyToNestedStruct(t *testing.T) {
 func TestUnsupportedContentType(t *testing.T) {
 	_, err := Apply("application/json", []byte(`{}`), []byte(`{}`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrUnsupportedContentType))
+	assert.ErrorIs(t, err, ErrUnsupportedContentType)
 }
 
 func TestEmptyContentType(t *testing.T) {
 	_, err := Apply("", []byte(`{}`), []byte(`{}`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrUnsupportedContentType))
+	assert.ErrorIs(t, err, ErrUnsupportedContentType)
 }
 
 // --- Equal ---

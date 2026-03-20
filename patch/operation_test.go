@@ -1,7 +1,6 @@
 package patch
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -93,7 +92,7 @@ func TestParseMergePatchNonObjectReplaces(t *testing.T) {
 func TestParseMergePatchInvalidJSON(t *testing.T) {
 	_, err := Parse(ContentTypeMergePatch, []byte(`{`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 // --- Parse: RFC 6902 JSON Patch ---
@@ -174,7 +173,7 @@ func TestParseJSONPatchNestedPath(t *testing.T) {
 func TestParseJSONPatchInvalidJSON(t *testing.T) {
 	_, err := Parse(ContentTypeJSONPatch, []byte(`[`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrInvalidPatch))
+	assert.ErrorIs(t, err, ErrInvalidPatch)
 }
 
 // --- Parse: Content-Type dispatch ---
@@ -182,7 +181,7 @@ func TestParseJSONPatchInvalidJSON(t *testing.T) {
 func TestParseUnsupportedContentType(t *testing.T) {
 	_, err := Parse("application/json", []byte(`{}`))
 	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrUnsupportedContentType))
+	assert.ErrorIs(t, err, ErrUnsupportedContentType)
 }
 
 // --- JSON Pointer (RFC 6901) ---
