@@ -295,8 +295,7 @@ func TestApplyToUnsupportedContentType(t *testing.T) {
 	thing := &Thing{ID: "1"}
 
 	err := ApplyTo("application/json", thing, []byte(`{}`))
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrUnsupportedContentType)
+	require.ErrorIs(t, err, ErrUnsupportedContentType)
 	assert.Equal(t, "1", thing.ID) // unchanged on error
 }
 
@@ -304,8 +303,7 @@ func TestApplyToInvalidPatch(t *testing.T) {
 	thing := &Thing{ID: "1", Price: 10.0}
 
 	err := ApplyTo(ContentTypeMergePatch, thing, []byte(`{`))
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrInvalidPatch)
+	require.ErrorIs(t, err, ErrInvalidPatch)
 	assert.InDelta(t, 10.0, thing.Price, 0.01) // unchanged on error
 }
 
