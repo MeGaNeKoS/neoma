@@ -31,5 +31,13 @@ func DefaultConfig(title string, version string) core.Config {
 		DefaultFormat:                     "application/json",
 		AllowAdditionalPropertiesByDefault: true,
 		FieldsOptionalByDefault:           true,
+		CreateHooks: []func(core.Config) core.Config{
+			func(c core.Config) core.Config {
+				linkTransformer := openapi.NewSchemaLinkTransformer(c.SchemasPath)
+				c.OnAddOperation = append(c.OnAddOperation, linkTransformer.OnAddOperation)
+				c.Transformers = append(c.Transformers, linkTransformer.Transform)
+				return c
+			},
+		},
 	}
 }
