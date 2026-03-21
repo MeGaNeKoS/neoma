@@ -7,6 +7,8 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// DefineErrors populates the error responses on an operation based on its declared
+// error status codes, the error schema from the factory, and any discovered errors.
 func DefineErrors(op *core.Operation, registry core.Registry, factory core.ErrorHandler, discovered ...[]core.DiscoveredError) {
 	// Get the error schema from the factory. If nil, skip entirely.
 	// This supports factories that want no error documentation (solves #880).

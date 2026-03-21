@@ -26,14 +26,21 @@ var (
 )
 
 
+// ParamWrapper is implemented by types that wrap a parameter value and provide
+// the actual reflect.Value that should receive the parsed data.
 type ParamWrapper interface {
 	Receiver() reflect.Value
 }
 
+// ParamReactor is implemented by types that need to be notified after a
+// parameter is bound, receiving whether the parameter was present and its
+// parsed value.
 type ParamReactor interface {
 	OnParamSet(isSet bool, parsed any)
 }
 
+// ParamFieldInfo describes a single parameter field, including its type, name,
+// location (path/query/header/cookie), default value, and serialization style.
 type ParamFieldInfo struct {
 	Type       reflect.Type
 	Name       string
@@ -47,12 +54,17 @@ type ParamFieldInfo struct {
 	IsPointer  bool // true when the original field is a pointer type (#393)
 }
 
+// ParamLocation pairs a ParamFieldInfo with its explode setting for OpenAPI
+// parameter documentation.
 type ParamLocation struct {
 	Explode *bool
 	PFI     *ParamFieldInfo
 }
 
 
+// GetParamValue extracts the raw string value for a parameter from the request
+// context based on its location (path, query, header, or cookie), falling back
+// to the default value if empty.
 func GetParamValue(p ParamFieldInfo, ctx core.Context, cookies map[string]*http.Cookie) string {
 	var value string
 	switch p.Loc {

@@ -1,3 +1,4 @@
+// Package neomafiber provides a neoma adapter for the Fiber v3 web framework.
 package neomafiber
 
 import (
@@ -16,6 +17,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+// MultipartMaxMemory is the maximum memory in bytes used for parsing multipart forms.
 var MultipartMaxMemory int64 = 8 * 1024
 
 // Unwrap extracts the underlying Fiber context from a Neoma context. If passed a
@@ -246,14 +248,17 @@ func (a *fiberAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.Copy(w, resp.Body)
 }
 
+// NewAdapter creates a new neoma Adapter wrapping the given Fiber App.
 func NewAdapter(r *fiber.App) core.Adapter {
 	return &fiberAdapter{tester: r, router: r}
 }
 
+// NewAdapterWithGroup creates a new neoma Adapter that registers routes on the given Fiber Router group.
 func NewAdapterWithGroup(r *fiber.App, g fiber.Router) core.Adapter {
 	return &fiberAdapter{tester: r, router: g}
 }
 
+// New creates a new neoma API using the given Fiber App and configuration.
 func New(r *fiber.App, config core.Config) core.API {
 	return neoma.NewAPI(config, NewAdapter(r))
 }

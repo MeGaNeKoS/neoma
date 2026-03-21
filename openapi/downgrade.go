@@ -10,6 +10,8 @@ import (
 )
 
 
+// Downgrade converts an OpenAPI 3.1+ spec to OpenAPI 3.0 compatible JSON by
+// transforming features like type arrays, exclusive min/max, and content encoding.
 func Downgrade(oapi *core.OpenAPI) ([]byte, error) {
 	b, err := oapi.MarshalJSON()
 	if err != nil {
@@ -23,6 +25,7 @@ func Downgrade(oapi *core.OpenAPI) ([]byte, error) {
 	return json.Marshal(v)
 }
 
+// DowngradeYAML converts an OpenAPI 3.1+ spec to OpenAPI 3.0 compatible YAML.
 func DowngradeYAML(oapi *core.OpenAPI) ([]byte, error) {
 	specJSON, err := Downgrade(oapi)
 	buf := bytes.NewBuffer([]byte{})
@@ -32,6 +35,7 @@ func DowngradeYAML(oapi *core.OpenAPI) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+// YAML serializes the OpenAPI spec to YAML without downgrading the version.
 func YAML(oapi *core.OpenAPI) ([]byte, error) {
 	specJSON, err := json.Marshal(oapi)
 	buf := bytes.NewBuffer([]byte{})

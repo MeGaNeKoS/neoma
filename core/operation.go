@@ -2,12 +2,18 @@ package core
 
 import "time"
 
+// ErrorResponseConfig holds configuration for a specific error response status
+// code, allowing customization of the description, headers, and schema.
 type ErrorResponseConfig struct {
 	Description string
 	Headers     map[string]*Param
 	Schema      *Schema
 }
 
+// Operation represents a single API operation on a path, combining the
+// OpenAPI 3.x operation object fields (tags, summary, parameters, responses,
+// etc.) with framework-specific settings (method, path, body limits,
+// validation flags, middleware).
 type Operation struct {
 	Method                       string                       `yaml:"-"`
 	Path                         string                       `yaml:"-"`
@@ -42,6 +48,8 @@ type Operation struct {
 	Extensions    map[string]any                    `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Operation to JSON, including only the OpenAPI
+// spec fields and any extensions. Framework-specific fields are excluded.
 func (o *Operation) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"tags", o.Tags, OmitEmpty},

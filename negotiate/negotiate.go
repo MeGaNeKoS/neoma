@@ -8,6 +8,8 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// Negotiator selects the appropriate format for marshalling and unmarshalling
+// based on HTTP content type headers.
 type Negotiator struct {
 	formats        map[string]core.Format
 	formatKeys     []string
@@ -15,6 +17,9 @@ type Negotiator struct {
 	noFallback     bool
 }
 
+// NewNegotiator creates a Negotiator with the given format map, default content
+// type, and fallback behavior. When noFallback is true, unrecognized Accept
+// values produce an error instead of falling back to the default format.
 func NewNegotiator(formats map[string]core.Format, defaultFormat string, noFallback bool) *Negotiator {
 	n := &Negotiator{
 		formats:       make(map[string]core.Format, len(formats)),
@@ -37,6 +42,8 @@ func NewNegotiator(formats map[string]core.Format, defaultFormat string, noFallb
 	return n
 }
 
+// Negotiate selects the best content type from the Accept header value,
+// returning the matched content type or an error if no match is found.
 func (n *Negotiator) Negotiate(accept string) (string, error) {
 	ct := SelectQValueFast(accept, n.formatKeys)
 	if ct == "" {
@@ -53,6 +60,8 @@ func (n *Negotiator) Negotiate(accept string) (string, error) {
 	return ct, nil
 }
 
+// Marshal encodes the value v into the writer using the format associated with
+// the given content type.
 func (n *Negotiator) Marshal(w io.Writer, ct string, v any) error {
 	f, ok := n.formats[ct]
 	if !ok {
@@ -68,6 +77,8 @@ func (n *Negotiator) Marshal(w io.Writer, ct string, v any) error {
 	return f.Marshal(w, v)
 }
 
+// Unmarshal decodes the byte slice into v using the format associated with the
+// given content type, defaulting to JSON if the content type is empty.
 func (n *Negotiator) Unmarshal(ct string, data []byte, v any) error {
 	start, end, err := parseContentType(ct)
 	if err != nil {

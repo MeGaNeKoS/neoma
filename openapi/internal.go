@@ -19,6 +19,8 @@ type hiddenParamEntry struct {
 }
 
 
+// GenerateInternalSpec returns a copy of the OpenAPI spec with hidden operations
+// merged in, intended for internal-only consumption.
 func GenerateInternalSpec(oapi *core.OpenAPI, hiddenOps []*core.Operation) (*core.OpenAPI, error) {
 	out := *oapi
 	out.Paths = make(map[string]*core.PathItem, len(oapi.Paths)+len(hiddenOps))
@@ -54,6 +56,8 @@ func GenerateInternalSpec(oapi *core.OpenAPI, hiddenOps []*core.Operation) (*cor
 	return &out, nil
 }
 
+// GenerateInternalSpecJSON returns the internal OpenAPI spec as JSON, including
+// hidden operations, hidden parameters, and hidden schema properties.
 func GenerateInternalSpecJSON(oapi *core.OpenAPI, hiddenOps []*core.Operation) ([]byte, error) {
 	data, err := json.Marshal(oapi)
 	if err != nil {
@@ -129,6 +133,8 @@ func GenerateInternalSpecJSON(oapi *core.OpenAPI, hiddenOps []*core.Operation) (
 	return json.Marshal(doc)
 }
 
+// RegisterInternalSpecRoutes registers HTTP routes that serve the internal
+// OpenAPI spec (JSON and YAML) and an internal documentation page.
 func RegisterInternalSpecRoutes(adapter core.Adapter, api core.API, config core.Config) {
 	isc := config.InternalSpec
 	if !isc.Enabled || isc.Path == "" {

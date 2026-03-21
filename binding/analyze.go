@@ -17,6 +17,8 @@ var (
 	resolverWithPathType = reflect.TypeFor[core.ResolverWithPath]()
 )
 
+// InputMeta holds metadata about a request input type, including parameter
+// locations, body schema, resolvers, and default values.
 type InputMeta struct {
 	Params             *FindResult[*ParamFieldInfo]
 	InputBodyIndex     []int
@@ -29,6 +31,8 @@ type InputMeta struct {
 	MultipartBodyIndex []int
 }
 
+// OutputMeta holds metadata about a response output type, including header
+// locations, status code index, and body field index.
 type OutputMeta struct {
 	Headers     *FindResult[*HeaderInfo]
 	StatusIndex int
@@ -36,6 +40,9 @@ type OutputMeta struct {
 	BodyFunc    bool
 }
 
+// AnalyzeInput inspects the input type I and populates the operation's OpenAPI
+// metadata (parameters, request body, schemas) while returning an InputMeta
+// that the runtime uses to bind request data.
 func AnalyzeInput[I any](op *core.Operation, registry core.Registry, fieldsOptionalByDefault bool) *InputMeta {
 	inputType := reflect.TypeFor[I]()
 	initResponses(op)
@@ -98,6 +105,9 @@ func AnalyzeInput[I any](op *core.Operation, registry core.Registry, fieldsOptio
 	return meta
 }
 
+// AnalyzeOutput inspects the output type O and populates the operation's OpenAPI
+// response metadata (status codes, headers, body schema) while returning an
+// OutputMeta that the runtime uses to write responses.
 func AnalyzeOutput[O any](op *core.Operation, registry core.Registry) *OutputMeta {
 	outputType := reflect.TypeFor[O]()
 	initResponses(op)

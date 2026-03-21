@@ -7,6 +7,8 @@ import (
 	"github.com/MeGaNeKoS/neoma/schema"
 )
 
+// DefaultConfig returns a Config pre-populated with sensible defaults
+// including JSON support, OpenAPI 3.2, and schema link transforms.
 func DefaultConfig(title string, version string) core.Config {
 	return core.Config{
 		OpenAPI: &core.OpenAPI{

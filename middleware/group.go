@@ -8,10 +8,15 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// OperationDocumenter is implemented by types that can register an operation
+// into the OpenAPI documentation.
 type OperationDocumenter interface {
 	DocumentOperation(op *core.Operation)
 }
 
+// PrefixModifier returns an operation modifier that prepends each of the given
+// path prefixes to the operation, duplicating the operation when multiple
+// prefixes are provided.
 func PrefixModifier(prefixes []string) func(o *core.Operation, next func(*core.Operation)) {
 	return func(o *core.Operation, next func(*core.Operation)) {
 		for _, prefix := range prefixes {
@@ -40,6 +45,8 @@ func (a *groupAdapter) Handle(op *core.Operation, handler func(core.Context)) {
 	})
 }
 
+// Group wraps a core.API to provide shared path prefixes, middleware,
+// transformers, and operation modifiers for a set of routes.
 type Group struct {
 	core.API
 	prefixes     []string
@@ -49,6 +56,8 @@ type Group struct {
 	transformers []core.Transformer
 }
 
+// NewGroup creates a new route group from the given API with optional path
+// prefixes applied to all registered operations.
 func NewGroup(api core.API, prefixes ...string) *Group {
 	group := &Group{API: api, prefixes: prefixes}
 	group.adapter = &groupAdapter{Adapter: api.Adapter(), group: group}
@@ -58,10 +67,14 @@ func NewGroup(api core.API, prefixes ...string) *Group {
 	return group
 }
 
+// Adapter returns the group's adapter, which wraps the underlying API adapter
+// to apply the group's modifiers during operation handling.
 func (g *Group) Adapter() core.Adapter {
 	return g.adapter
 }
 
+// DocumentOperation applies the group's modifiers to the operation and adds it
+// to the OpenAPI documentation.
 func (g *Group) DocumentOperation(op *core.Operation) {
 	g.modifyOperation(op, func(op *core.Operation) {
 		if documenter, ok := g.API.(OperationDocumenter); ok {
@@ -75,10 +88,14 @@ func (g *Group) DocumentOperation(op *core.Operation) {
 	})
 }
 
+// UseModifier adds an operation modifier that can inspect and transform
+// operations as they are registered, calling next to continue the chain.
 func (g *Group) UseModifier(modifier func(o *core.Operation, next func(*core.Operation))) {
 	g.modifiers = append(g.modifiers, modifier)
 }
 
+// UseSimpleModifier adds an operation modifier that transforms the operation
+// without needing to call a next function.
 func (g *Group) UseSimpleModifier(modifier func(o *core.Operation)) {
 	g.modifiers = append(g.modifiers, func(o *core.Operation, next func(*core.Operation)) {
 		modifier(o)
@@ -127,19 +144,26 @@ func generateGroupSummary(method, path string) string {
 	return strings.ToLower(method) + " " + last
 }
 
+// UseMiddleware appends middleware functions to the group's middleware chain.
 func (g *Group) UseMiddleware(middlewares ...core.MiddlewareFunc) {
 	g.middlewares = append(g.middlewares, middlewares...)
 }
 
+// Middlewares returns the combined middleware chain of the parent API followed
+// by this group's own middleware.
 func (g *Group) Middlewares() core.Middlewares {
 	m := append(core.Middlewares{}, g.API.Middlewares()...)
 	return append(m, g.middlewares...)
 }
 
+// UseTransformer appends response transformers to the group's transformer
+// chain.
 func (g *Group) UseTransformer(transformers ...core.Transformer) {
 	g.transformers = append(g.transformers, transformers...)
 }
 
+// Transform runs the parent API's transformers followed by the group's own
+// transformers on the response value.
 func (g *Group) Transform(ctx core.Context, status string, v any) (any, error) {
 	v, err := g.API.Transform(ctx, status, v)
 	if err != nil {
@@ -154,10 +178,12 @@ func (g *Group) Transform(ctx core.Context, status string, v any) (any, error) {
 	return v, nil
 }
 
+// Group creates a sub-group with the given path prefix.
 func (g *Group) Group(prefix string) *Group {
 	return NewGroup(g, prefix)
 }
 
+// Config returns the configuration from the underlying API, if available.
 func (g *Group) Config() core.Config {
 	type configProvider interface{ Config() core.Config }
 	if cp, ok := g.API.(configProvider); ok {
@@ -166,14 +192,17 @@ func (g *Group) Config() core.Config {
 	return core.Config{}
 }
 
+// Negotiate delegates content negotiation to the underlying API.
 func (g *Group) Negotiate(accept string) (string, error) {
 	return g.API.Negotiate(accept)
 }
 
+// Marshal delegates response marshalling to the underlying API.
 func (g *Group) Marshal(w io.Writer, contentType string, v any) error {
 	return g.API.Marshal(w, contentType, v)
 }
 
+// Unmarshal delegates request unmarshalling to the underlying API.
 func (g *Group) Unmarshal(contentType string, data []byte, v any) error {
 	return g.API.Unmarshal(contentType, data, v)
 }

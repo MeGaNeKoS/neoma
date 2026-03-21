@@ -1,3 +1,5 @@
+// Package conditional implements HTTP conditional request handling using
+// If-Match, If-None-Match, If-Modified-Since, and If-Unmodified-Since headers.
 package conditional
 
 import (
@@ -15,6 +17,7 @@ func trimETag(value string) string {
 	return strings.Trim(value, "\"")
 }
 
+// Params holds the parsed HTTP conditional request headers for an operation.
 type Params struct {
 	IfMatch           []string  `header:"If-Match" doc:"Succeeds if the server's resource matches one of the passed values."`
 	IfNoneMatch       []string  `header:"If-None-Match" doc:"Succeeds if the server's resource matches none of the passed values. On writes, the special value * may be used to match any existing value."`
@@ -24,6 +27,8 @@ type Params struct {
 	isWrite bool
 }
 
+// Resolve reads the request method from the context to determine whether the
+// current operation is a write (POST, PUT, PATCH, DELETE).
 func (p *Params) Resolve(ctx core.Context) []error {
 	switch ctx.Method() {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
@@ -32,10 +37,15 @@ func (p *Params) Resolve(ctx core.Context) []error {
 	return nil
 }
 
+// HasConditionalParams reports whether any conditional headers were provided
+// in the request.
 func (p *Params) HasConditionalParams() bool {
 	return len(p.IfMatch) > 0 || len(p.IfNoneMatch) > 0 || !p.IfModifiedSince.IsZero() || !p.IfUnmodifiedSince.IsZero()
 }
 
+// Check evaluates all conditional headers against the given ETag and
+// modification time, returning an HTTP status code and message if a
+// precondition fails, or zero if all preconditions pass.
 func (p *Params) Check(etag string, modified time.Time) (status int, msg string) {
 	failed := false
 	var msgs []string

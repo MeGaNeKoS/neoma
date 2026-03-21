@@ -9,11 +9,15 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// DefaultResultPath represents a single default value located at a specific
+// field path within a struct hierarchy.
 type DefaultResultPath struct {
 	Path  []int
 	Value any
 }
 
+// DefaultResult holds a collection of default values discovered for a type,
+// each associated with the struct field index path where the default applies.
 type DefaultResult struct {
 	Paths []DefaultResultPath
 }
@@ -47,6 +51,8 @@ func (r *DefaultResult) every(current reflect.Value, path []int, v any, f func(r
 	}
 }
 
+// Every calls f for each default value path, traversing into the given value
+// to locate the target field. Slices and maps are traversed recursively.
 func (r *DefaultResult) Every(v reflect.Value, f func(reflect.Value, any)) {
 	for i := range r.Paths {
 		r.every(v, r.Paths[i].Path, r.Paths[i].Value, f)
@@ -116,6 +122,8 @@ func (r *DefaultResult) everyPB(current reflect.Value, path []int, pb *core.Path
 	}
 }
 
+// EveryPB is like Every but also tracks the JSON path using a PathBuffer,
+// which is useful for reporting the location of applied defaults.
 func (r *DefaultResult) EveryPB(pb *core.PathBuffer, v reflect.Value, f func(reflect.Value, any)) {
 	for i := range r.Paths {
 		pb.Reset()
@@ -123,6 +131,8 @@ func (r *DefaultResult) EveryPB(pb *core.PathBuffer, v reflect.Value, f func(ref
 	}
 }
 
+// ApplyDefaults sets zero-valued fields in v to their default values as
+// described by the given DefaultResult.
 func ApplyDefaults(defaults *DefaultResult, v reflect.Value) {
 	defaults.Every(v, func(item reflect.Value, def any) {
 		if item.IsZero() {
@@ -135,6 +145,8 @@ func ApplyDefaults(defaults *DefaultResult, v reflect.Value) {
 	})
 }
 
+// FindDefaults walks the given type and returns all fields that have a
+// "default" struct tag, along with their parsed default values.
 func FindDefaults(registry core.Registry, t reflect.Type) *DefaultResult {
 	result := &DefaultResult{}
 	findDefaultsInType(registry, t, nil, result, make(map[reflect.Type]struct{}))

@@ -7,6 +7,8 @@ import (
 )
 
 
+// FilterByTag returns a copy of the OpenAPI spec containing only operations that
+// have the specified tag.
 func FilterByTag(oapi *core.OpenAPI, tag string) *core.OpenAPI {
 	out := cloneOpenAPI(oapi)
 	for path, pi := range oapi.Paths {
@@ -20,6 +22,8 @@ func FilterByTag(oapi *core.OpenAPI, tag string) *core.OpenAPI {
 	return out
 }
 
+// FilterExcludeTag returns a copy of the OpenAPI spec with all operations that
+// have the specified tag removed.
 func FilterExcludeTag(oapi *core.OpenAPI, tag string) *core.OpenAPI {
 	out := cloneOpenAPI(oapi)
 	for path, pi := range oapi.Paths {

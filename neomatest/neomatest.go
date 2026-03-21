@@ -1,3 +1,6 @@
+// Package neomatest provides testing utilities for neoma APIs, including an
+// in-memory adapter for sending requests and inspecting responses without
+// starting a real HTTP server.
 package neomatest
 
 import (
@@ -18,12 +21,14 @@ import (
 	"github.com/MeGaNeKoS/neoma/neoma"
 )
 
+// TB is a subset of testing.TB used for logging during test requests.
 type TB interface {
 	Helper()
 	Log(args ...any)
 	Logf(format string, args ...any)
 }
 
+// TestAPI extends core.API with convenience methods for making test requests.
 type TestAPI interface {
 	core.API
 	DoCtx(ctx context.Context, method, path string, args ...any) *httptest.ResponseRecorder
@@ -93,6 +98,8 @@ func (a *testAPI) DoCtx(ctx context.Context, method, path string, args ...any) *
 	return resp
 }
 
+// DumpRequest serializes an HTTP request, including its body, into a byte
+// slice suitable for logging.
 func DumpRequest(req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
 	b, err := httputil.DumpRequest(req, false)
@@ -105,6 +112,8 @@ func DumpRequest(req *http.Request) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+// DumpResponse serializes an HTTP response, including its body, into a byte
+// slice suitable for logging.
 func DumpResponse(resp *http.Response) ([]byte, error) {
 	var buf bytes.Buffer
 	b, err := httputil.DumpResponse(resp, false)
@@ -117,6 +126,8 @@ func DumpResponse(resp *http.Response) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+// New creates an in-memory HTTP handler and TestAPI backed by the standard
+// library adapter, ready for use in tests.
 func New(tb TB, configs ...core.Config) (http.Handler, TestAPI) {
 	for _, config := range configs {
 		if config.OpenAPI == nil {
@@ -132,26 +143,33 @@ func New(tb TB, configs ...core.Config) (http.Handler, TestAPI) {
 	return mux, Wrap(tb, api)
 }
 
+// NewAdapter returns a new standard library adapter backed by an in-memory
+// ServeMux, useful for tests that need a standalone adapter.
 func NewAdapter() core.Adapter {
 	return neomastdlib.NewAdapter(http.NewServeMux())
 }
 
+// NewContext creates a new core.Context from the given operation, request, and
+// response writer, backed by the standard library adapter.
 func NewContext(op *core.Operation, r *http.Request, w http.ResponseWriter) core.Context {
 	return neomastdlib.NewContext(op, r, w)
 }
 
+// PrintRequest writes a formatted dump of the HTTP request to stdout.
 func PrintRequest(req *http.Request) {
 	b, _ := DumpRequest(req)
 	b = bytes.ReplaceAll(b, []byte("\r"), []byte(""))
 	fmt.Println(string(b))
 }
 
+// PrintResponse writes a formatted dump of the HTTP response to stdout.
 func PrintResponse(resp *http.Response) {
 	b, _ := DumpResponse(resp)
 	b = bytes.ReplaceAll(b, []byte("\r"), []byte(""))
 	fmt.Println(string(b))
 }
 
+// Wrap wraps an existing core.API with test request/response helpers.
 func Wrap(tb TB, api core.API) TestAPI {
 	return &testAPI{api, tb}
 }

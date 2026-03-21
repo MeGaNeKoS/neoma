@@ -11,6 +11,8 @@ var (
 	discoveredErrors = map[string][]core.DiscoveredError{}
 )
 
+// RegisterDiscoveredErrors merges the given error mappings into the global
+// discovered errors registry, keyed by handler or operation name.
 func RegisterDiscoveredErrors(errors map[string][]core.DiscoveredError) {
 	discoveredMu.Lock()
 	defer discoveredMu.Unlock()

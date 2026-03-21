@@ -1,3 +1,4 @@
+// Package neomastdlib provides a neoma adapter for Go's standard library net/http router.
 package neomastdlib
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/MeGaNeKoS/neoma/neoma"
 )
 
+// MultipartMaxMemory is the maximum memory in bytes used for parsing multipart forms.
 var MultipartMaxMemory int64 = 8 * 1024
 
 type stdlibContext struct {
@@ -95,6 +97,8 @@ func (c *stdlibContext) MatchedPattern() string {
 	return c.op.Path
 }
 
+// Unwrap extracts the underlying *http.Request and http.ResponseWriter from a neoma Context.
+// It panics if the context was not created by this adapter.
 func Unwrap(ctx core.Context) (*http.Request, http.ResponseWriter) {
 	c, ok := core.UnwrapContext(ctx).(*stdlibContext)
 	if !ok {
@@ -118,14 +122,17 @@ func (a *stdlibAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.mux.ServeHTTP(w, r)
 }
 
+// NewContext creates a new neoma Context wrapping the given http.Request and http.ResponseWriter.
 func NewContext(op *core.Operation, r *http.Request, w http.ResponseWriter) core.Context {
 	return &stdlibContext{op: op, r: r, w: w}
 }
 
+// NewAdapter creates a new neoma Adapter wrapping the given http.ServeMux.
 func NewAdapter(mux *http.ServeMux) core.Adapter {
 	return &stdlibAdapter{mux: mux}
 }
 
+// New creates a new neoma API using the given http.ServeMux and configuration.
 func New(mux *http.ServeMux, config core.Config) core.API {
 	return neoma.NewAPI(config, NewAdapter(mux))
 }

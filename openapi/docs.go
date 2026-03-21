@@ -11,10 +11,13 @@ import (
 
 const scalarCDN = "https://unpkg.com/@scalar/api-reference@1.44.20/dist/browser/standalone.js"
 
+// ScalarProvider renders API documentation using the Scalar UI. Set LocalJSPath
+// to serve the Scalar JavaScript bundle from a local path instead of the CDN.
 type ScalarProvider struct {
 	LocalJSPath string
 }
 
+// Render returns an HTML page that loads the Scalar API reference UI for the given spec URL.
 func (p ScalarProvider) Render(specURL string, title string) string {
 	if title == "" {
 		title = "API Reference"
@@ -57,8 +60,10 @@ func (p ScalarProvider) csp() string {
 	}, "; ")
 }
 
+// StoplightProvider renders API documentation using Stoplight Elements.
 type StoplightProvider struct{}
 
+// Render returns an HTML page that loads the Stoplight Elements UI for the given spec URL.
 func (p StoplightProvider) Render(specURL string, title string) string {
 	if title == "" {
 		title = "Elements in HTML"
@@ -98,11 +103,14 @@ func (p StoplightProvider) csp() string {
 	}, "; ")
 }
 
+// SwaggerUIProvider renders API documentation using Swagger UI. Set OAuthClientID
+// and OAuthScopes to enable OAuth2 authorization in the UI.
 type SwaggerUIProvider struct {
 	OAuthClientID string
 	OAuthScopes   []string
 }
 
+// Render returns an HTML page that loads the Swagger UI for the given spec URL.
 func (p SwaggerUIProvider) Render(specURL string, title string) string {
 	if title == "" {
 		title = "SwaggerUI in HTML"
@@ -166,6 +174,8 @@ type cspProvider interface {
 	csp() string
 }
 
+// RegisterDocsRoute registers an HTTP route that serves an interactive API
+// documentation page using the configured documentation provider.
 func RegisterDocsRoute(adapter core.Adapter, oapi *core.OpenAPI, config core.Config) {
 	docsPath := config.Docs.Path
 	if docsPath == "" {

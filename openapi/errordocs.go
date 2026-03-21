@@ -115,6 +115,8 @@ var defaultErrorDocs = map[int]core.ErrorDoc{
 }
 
 
+// RegisterErrorDocRoutes registers HTTP routes that serve human-readable error
+// documentation pages (HTML and JSON) for each HTTP status code used by the API.
 func RegisterErrorDocRoutes(adapter core.Adapter, factory core.ErrorHandler, config core.Config) {
 	var baseURI string
 	if f, ok := factory.(interface{ GetTypeBaseURI() string }); ok {

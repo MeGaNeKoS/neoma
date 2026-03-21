@@ -10,22 +10,30 @@ import (
 )
 
 
+// FindResultPath pairs a struct field index path with its associated value
+// found during type traversal.
 type FindResultPath[T comparable] struct {
 	Path  []int
 	Value T
 }
 
+// FindResult holds the results of a recursive type scan, mapping struct field
+// paths to their discovered values.
 type FindResult[T comparable] struct {
 	Paths []FindResultPath[T]
 }
 
 
+// Every traverses the value v and calls f for each field that matched during
+// the original type scan, recursing into slices and maps.
 func (r *FindResult[T]) Every(v reflect.Value, f func(reflect.Value, T)) {
 	for i := range r.Paths {
 		r.every(v, r.Paths[i].Path, r.Paths[i].Value, f)
 	}
 }
 
+// EveryPB is like Every but also tracks the JSON/parameter path in pb for use
+// in validation error reporting.
 func (r *FindResult[T]) EveryPB(pb *core.PathBuffer, v reflect.Value, f func(reflect.Value, T)) {
 	for i := range r.Paths {
 		pb.Reset()

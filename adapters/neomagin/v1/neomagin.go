@@ -1,3 +1,4 @@
+// Package neomagin provides a neoma adapter for the Gin web framework.
 package neomagin
 
 import (
@@ -15,8 +16,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// MultipartMaxMemory is the maximum memory in bytes used for parsing multipart forms.
 var MultipartMaxMemory int64 = 8 * 1024
 
+// Unwrap extracts the underlying *gin.Context from a neoma Context.
+// It panics if the context was not created by this adapter.
 func Unwrap(ctx core.Context) *gin.Context {
 	c, ok := core.UnwrapContext(ctx).(*ginCtx)
 	if !ok {
@@ -137,10 +141,12 @@ func (c *ginCtx) MatchedPattern() string {
 	return c.orig.FullPath()
 }
 
+// NewContext creates a new neoma Context wrapping the given *gin.Context.
 func NewContext(op *core.Operation, c *gin.Context) core.Context {
 	return &ginCtx{op: op, orig: c}
 }
 
+// Router is the common interface for gin.Engine and gin.RouterGroup.
 type Router interface {
 	Handle(string, string, ...gin.HandlerFunc) gin.IRoutes
 }
@@ -165,14 +171,17 @@ func (a *ginAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.Handler.ServeHTTP(w, r)
 }
 
+// NewAdapter creates a new neoma Adapter wrapping the given gin.Engine.
 func NewAdapter(r *gin.Engine) core.Adapter {
 	return &ginAdapter{Handler: r, router: r}
 }
 
+// NewAdapterWithGroup creates a new neoma Adapter that registers routes on the given gin.RouterGroup.
 func NewAdapterWithGroup(r *gin.Engine, g *gin.RouterGroup) core.Adapter {
 	return &ginAdapter{Handler: r, router: g}
 }
 
+// New creates a new neoma API using the given gin.Engine and configuration.
 func New(r *gin.Engine, config core.Config) core.API {
 	return neoma.NewAPI(config, NewAdapter(r))
 }

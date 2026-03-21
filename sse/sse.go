@@ -1,3 +1,5 @@
+// Package sse provides Server-Sent Events (SSE) support for streaming
+// responses from neoma API handlers.
 package sse
 
 import (
@@ -15,20 +17,29 @@ import (
 	"github.com/MeGaNeKoS/neoma/neoma"
 )
 
+// Message represents a single Server-Sent Event with optional ID, data payload,
+// and retry interval.
 type Message struct {
 	ID    int
 	Data  any
 	Retry int
 }
 
+// Sender is a function that sends a Server-Sent Event message to the client.
 type Sender func(Message) error
 
+// Data is a convenience method that sends a message containing only the given
+// data payload.
 func (s Sender) Data(data any) error {
 	return s(Message{Data: data})
 }
 
+// WriteTimeout is the deadline applied to each SSE write operation.
 var WriteTimeout = 5 * time.Second
 
+// Register adds an SSE endpoint to the API. It configures the operation's
+// response schema from the eventTypeMap and streams events via the handler's
+// Sender callback.
 func Register[I any](api core.API, op core.Operation, eventTypeMap map[string]any, handler func(ctx context.Context, input *I, send Sender)) {
 	if op.Responses == nil {
 		op.Responses = map[string]*core.Response{}

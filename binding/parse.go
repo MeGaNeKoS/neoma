@@ -13,6 +13,7 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// ErrUnparsable is returned when a value cannot be parsed into the target type.
 var ErrUnparsable = errors.New("unparsable value")
 
 var intBitSizes = map[reflect.Kind]int{
@@ -30,6 +31,9 @@ var floatBitSizes = map[reflect.Kind]int{
 }
 
 
+// ParseInto parses a string parameter value into the reflect.Value f based on
+// the type information in p. For slice types, preSplit or exploded query values
+// are used. It returns the parsed value or an error if parsing fails.
 func ParseInto(ctx core.Context, f reflect.Value, value string, preSplit []string, p ParamFieldInfo, parsedQuery ...url.Values) (any, error) {
 	switch p.Type.Kind() {
 	case reflect.String:

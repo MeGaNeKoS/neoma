@@ -12,12 +12,18 @@ var (
 	formFileSliceType = reflect.TypeFor[[]core.FormFile]()
 )
 
+// MultipartFormFiles wraps a struct type T whose fields represent multipart
+// form file uploads.
 type MultipartFormFiles[T any] struct {
 	data T
 }
 
+// Data returns the underlying struct containing the parsed form file fields.
 func (m *MultipartFormFiles[T]) Data() T { return m.data }
 
+// MultipartFieldInfo describes a single field within a multipart form body,
+// including its form name, struct index path, and whether it represents a file
+// upload.
 type MultipartFieldInfo struct {
 	Name    string
 	Index   []int
@@ -26,11 +32,16 @@ type MultipartFieldInfo struct {
 	Type    reflect.Type
 }
 
+// MultipartProcessingConfig holds the parameters for processing a multipart
+// form request into the target struct value.
 type MultipartProcessingConfig struct {
 	Value  reflect.Value
 	Fields []MultipartFieldInfo
 }
 
+// AnalyzeMultipartFields inspects a struct type and returns metadata for each
+// exported field that has a "form" tag, identifying file uploads and value
+// fields.
 func AnalyzeMultipartFields(t reflect.Type) []MultipartFieldInfo {
 	t = core.Deref(t)
 	if t.Kind() != reflect.Struct {
@@ -69,6 +80,9 @@ func AnalyzeMultipartFields(t reflect.Type) []MultipartFieldInfo {
 	return fields
 }
 
+// ProcessMultipartForm parses the multipart form from ctx and populates the
+// target struct fields described by cfg. File fields are opened and assigned as
+// FormFile values; non-file fields are parsed from their string values.
 func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *ContextError {
 	form, err := ctx.GetMultipartForm()
 	if err != nil {
@@ -145,6 +159,8 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 	return nil
 }
 
+// SetupMultipartRequestBody configures the operation's OpenAPI request body
+// schema for multipart/form-data based on the provided field metadata.
 func SetupMultipartRequestBody(op *core.Operation, fields []MultipartFieldInfo) {
 	initRequestBody(op)
 
@@ -201,6 +217,8 @@ func schemaForType(t reflect.Type) *core.Schema {
 	}
 }
 
+// HasMultipartFields reports whether the struct type t contains any exported
+// fields with a "form" tag that represent file uploads.
 func HasMultipartFields(t reflect.Type) bool {
 	t = core.Deref(t)
 	if t.Kind() != reflect.Struct {
@@ -221,6 +239,8 @@ func HasMultipartFields(t reflect.Type) bool {
 	return false
 }
 
+// IsMultipartFormFilesType reports whether t is a MultipartFormFiles wrapper
+// type.
 func IsMultipartFormFilesType(t reflect.Type) bool {
 	t = core.Deref(t)
 	if t.Kind() != reflect.Struct || t.NumField() == 0 {

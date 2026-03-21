@@ -1,3 +1,5 @@
+// Package casing provides string case conversion utilities for transforming
+// between camelCase, snake_case, kebab-case, and other naming conventions.
 package casing
 
 import (
@@ -115,12 +117,17 @@ var commonSuffixes = map[string]bool{
 	"TB": true,
 }
 
+// TransformFunc is a function that transforms a single word part during case
+// conversion.
 type TransformFunc func(string) string
 
+// Identity is a TransformFunc that returns the input string unchanged.
 func Identity(part string) string {
 	return part
 }
 
+// Initialism is a TransformFunc that uppercases known initialisms such as
+// "HTTP", "ID", and "URL", leaving other words unchanged.
 func Initialism(part string) string {
 	if u := strings.ToUpper(part); commonInitialisms[u] {
 		return u
@@ -136,6 +143,8 @@ const (
 	stateSymbol     = 4
 )
 
+// Split breaks a string into word parts by detecting case transitions,
+// separators (spaces, punctuation, underscores, hyphens), and symbol boundaries.
 func Split(value string) []string {
 	var results []string
 	start := 0
@@ -199,6 +208,8 @@ func Split(value string) []string {
 	return results
 }
 
+// Join concatenates word parts with the given separator, applying each
+// transform function in order to every part.
 func Join(parts []string, sep string, transform ...TransformFunc) string {
 	for i := 0; i < len(parts); i++ {
 		for _, t := range transform {
@@ -215,6 +226,8 @@ func Join(parts []string, sep string, transform ...TransformFunc) string {
 	return strings.Join(parts, sep)
 }
 
+// MergeNumbers merges numeric parts with adjacent word parts, handling common
+// suffixes like "GB", "K", and "P" (e.g., "4" + "K" becomes "4K").
 func MergeNumbers(parts []string, suffixes ...string) []string {
 	// TODO: should we do this in-place instead?
 	results := make([]string, 0, len(parts))
@@ -270,6 +283,8 @@ func MergeNumbers(parts []string, suffixes ...string) []string {
 	return results
 }
 
+// Camel converts a string to UpperCamelCase (PascalCase), applying optional
+// transform functions to each word part before title-casing.
 func Camel(value string, transform ...TransformFunc) string {
 	if transform == nil {
 		transform = []TransformFunc{strings.ToLower}
@@ -278,12 +293,16 @@ func Camel(value string, transform ...TransformFunc) string {
 	return Join(Split(value), "", transform...)
 }
 
+// LowerCamel converts a string to lowerCamelCase, applying optional transform
+// functions to each word part.
 func LowerCamel(value string, transform ...TransformFunc) string {
 	runes := []rune(Camel(value, transform...))
 	runes[0] = unicode.ToLower(runes[0])
 	return string(runes)
 }
 
+// Snake converts a string to snake_case, applying optional transform functions
+// to each word part.
 func Snake(value string, transform ...TransformFunc) string {
 	if transform == nil {
 		transform = []TransformFunc{strings.ToLower}
@@ -291,6 +310,8 @@ func Snake(value string, transform ...TransformFunc) string {
 	return Join(MergeNumbers(Split(value)), "_", transform...)
 }
 
+// Kebab converts a string to kebab-case, applying optional transform functions
+// to each word part.
 func Kebab(value string, transform ...TransformFunc) string {
 	if transform == nil {
 		transform = []TransformFunc{strings.ToLower}

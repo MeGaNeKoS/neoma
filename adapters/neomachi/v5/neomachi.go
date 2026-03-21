@@ -1,3 +1,4 @@
+// Package neomachi provides a neoma adapter for the chi v5 HTTP router.
 package neomachi
 
 import (
@@ -14,8 +15,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// MultipartMaxMemory is the maximum memory in bytes used for parsing multipart forms.
 var MultipartMaxMemory int64 = 8 * 1024
 
+// Unwrap extracts the underlying *http.Request and http.ResponseWriter from a neoma Context.
+// It panics if the context was not created by this adapter.
 func Unwrap(ctx core.Context) (*http.Request, http.ResponseWriter) {
 	c, ok := core.UnwrapContext(ctx).(*chiContext)
 	if !ok {
@@ -145,6 +149,7 @@ func (c *chiContext) MatchedPattern() string {
 	return ""
 }
 
+// NewContext creates a new neoma Context wrapping the given http.Request and http.ResponseWriter.
 func NewContext(op *core.Operation, r *http.Request, w http.ResponseWriter) core.Context {
 	return &chiContext{op: op, r: r, w: w}
 }
@@ -163,10 +168,12 @@ func (a *chiAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.router.ServeHTTP(w, r)
 }
 
+// NewAdapter creates a new neoma Adapter wrapping the given chi Router.
 func NewAdapter(r chi.Router) core.Adapter {
 	return &chiAdapter{router: r}
 }
 
+// New creates a new neoma API using the given chi Router and configuration.
 func New(r chi.Router, config core.Config) core.API {
 	return neoma.NewAPI(config, NewAdapter(r))
 }

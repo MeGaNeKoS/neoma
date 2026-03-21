@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// SelectQValue parses an Accept header and returns the allowed content type
+// with the highest quality value. It returns an empty string if no match is
+// found.
 func SelectQValue(header string, allowed []string) string {
 	formats := strings.Split(header, ",")
 	best := ""
@@ -35,6 +38,8 @@ func SelectQValue(header string, allowed []string) string {
 	return best
 }
 
+// SelectQValueFast is an optimized version of SelectQValue that avoids
+// allocations by scanning the header in a single pass.
 func SelectQValueFast(header string, allowed []string) string {
 	best := ""
 	bestQ := 0.0

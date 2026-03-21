@@ -3,6 +3,8 @@
 // Copyright (c) 2009,2014 Google Inc. All rights reserved.
 // BSD licensed.
 
+// Package validation provides format validation functions used by the neoma
+// schema validation engine.
 package validation
 
 import (
@@ -17,6 +19,8 @@ func (err invalidLengthError) Error() string {
 	return fmt.Sprintf("invalid UUID length: %d", err.len)
 }
 
+// ValidateUUID checks whether s is a valid UUID in standard, URN, bracketed,
+// or hex-only format, returning an error if the format is invalid.
 func ValidateUUID(s string) error {
 	switch len(s) {
 	case 36:

@@ -20,12 +20,16 @@ var statusStrings = map[int]string{
 	500: "500", 501: "501", 502: "502", 503: "503", 504: "504", 505: "505", 506: "506", 507: "507", 508: "508", 510: "510", 511: "511",
 }
 
+// HeaderInfo describes a response header field, including the struct field it
+// maps to, the HTTP header name, and an optional time format string.
 type HeaderInfo struct {
 	Field      reflect.StructField
 	Name       string
 	TimeFormat string
 }
 
+// WriteHeader writes a single response header by converting the field value f
+// to a string and passing it to the write function along with the header name.
 func WriteHeader(write func(string, string), info *HeaderInfo, f reflect.Value) {
 	switch f.Kind() {
 	case reflect.String:
@@ -58,6 +62,9 @@ func WriteHeader(write func(string, string), info *HeaderInfo, f reflect.Value) 
 	}
 }
 
+// WriteResponse negotiates the content type (if ct is empty), applies any
+// registered transformers, marshals the body, and writes the HTTP response. It
+// returns an error if content negotiation or marshaling fails.
 func WriteResponse(api core.API, ctx core.Context, status int, ct string, body any) error {
 	if ct == "" {
 		var err error
@@ -89,6 +96,7 @@ func WriteResponse(api core.API, ctx core.Context, status int, ct string, body a
 	return transformAndWrite(api, ctx, status, ct, body)
 }
 
+// WriteResponseWithPanic calls WriteResponse and panics if it returns an error.
 func WriteResponseWithPanic(api core.API, ctx core.Context, status int, ct string, body any) {
 	if err := WriteResponse(api, ctx, status, ct, body); err != nil {
 		panic(err)

@@ -12,6 +12,8 @@ import (
 
 )
 
+// JSON Schema type constants as defined in the JSON Schema Validation
+// specification (RFC draft-bhutton-json-schema-validation).
 const (
 	TypeBoolean = "boolean"
 	TypeInteger = "integer"
@@ -22,13 +24,19 @@ const (
 )
 
 
+// ErrSchemaInvalid is returned when a schema fails validation.
 var ErrSchemaInvalid = errors.New("schema is invalid")
 
+// Discriminator represents an OpenAPI discriminator object, used to aid in
+// serialization, deserialization, and validation of polymorphic schemas
+// (oneOf, anyOf).
 type Discriminator struct {
 	PropertyName string            `yaml:"propertyName"`
 	Mapping      map[string]string `yaml:"mapping,omitempty"`
 }
 
+// MarshalJSON serializes the Discriminator to JSON with controlled field
+// ordering and omission behavior.
 func (d *Discriminator) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"propertyName", d.PropertyName, OmitNever},
@@ -36,6 +44,10 @@ func (d *Discriminator) MarshalJSON() ([]byte, error) {
 	}, nil)
 }
 
+// Schema represents a JSON Schema document as defined by the JSON Schema
+// specification (draft 2020-12). It is used for request/response validation
+// and OpenAPI spec generation. Fields prefixed with Msg are precomputed
+// validation error messages populated by [Schema.PrecomputeMessages].
 type Schema struct {
 	Type                 string              `yaml:"type,omitempty"`
 	Nullable             bool                `yaml:"-"`
@@ -100,6 +112,8 @@ type Schema struct {
 	MsgDependentRequired map[string]map[string]string `yaml:"-"`
 }
 
+// MarshalJSON serializes the Schema to JSON, handling nullable types, hidden
+// properties, and extension fields.
 func (s *Schema) MarshalJSON() ([]byte, error) {
 	var typ any = s.Type
 	if s.Nullable {
@@ -165,6 +179,11 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 	}, s.Extensions)
 }
 
+// PrecomputeMessages populates the Msg fields with formatted validation error
+// messages and builds lookup structures such as RequiredMap and PropertyNames.
+// It recurses into sub-schemas (items, properties, oneOf, anyOf, allOf, not).
+// Call this after constructing or modifying a schema to prepare it for
+// validation.
 func (s *Schema) PrecomputeMessages() {
 	s.MsgEnum = fmt.Sprintf(MsgExpectedOneOf,
 		strings.Join(mapTo(s.Enum, func(v any) string { return fmt.Sprintf("%v", v) }), ", "))
@@ -266,28 +285,42 @@ func (s *Schema) PrecomputeMessages() {
 	}
 }
 
+// OmitType controls the omission behavior of a JSON field during marshaling.
 type OmitType int
 
+// OmitType values control when a JSON field is omitted from output.
 const (
+	// OmitNever always includes the field in the JSON output.
 	OmitNever OmitType = iota
+	// OmitEmpty omits the field when its value is the zero value for its type.
 	OmitEmpty
+	// OmitNil omits the field when its value is nil.
 	OmitNil
 )
 
+// JSONFieldInfo describes a single field for use with [MarshalJSON], including
+// its JSON key name, value, and omission strategy.
 type JSONFieldInfo struct {
 	Name  string
 	Value any
 	Omit  OmitType
 }
 
+// SchemaProvider is implemented by types that provide a custom JSON Schema
+// representation instead of relying on automatic schema generation.
 type SchemaProvider interface {
 	Schema(r Registry) *Schema
 }
 
+// SchemaTransformer is implemented by types that need to modify their
+// auto-generated JSON Schema after it has been created by the registry.
 type SchemaTransformer interface {
 	TransformSchema(r Registry, s *Schema) *Schema
 }
 
+// Registry manages JSON Schema definitions and provides methods for
+// generating schemas from Go types, resolving $ref references, and
+// registering type aliases.
 type Registry interface {
 	Schema(t reflect.Type, allowRef bool, hint string) *Schema
 	SchemaFromRef(ref string) *Schema
@@ -296,6 +329,9 @@ type Registry interface {
 	RegisterTypeAlias(t reflect.Type, alias reflect.Type)
 }
 
+// IsEmptyValue reports whether v is the zero value for its type. It handles
+// arrays, maps, slices, strings, booleans, numeric types, and pointer/interface
+// types.
 func IsEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
@@ -315,6 +351,8 @@ func IsEmptyValue(v reflect.Value) bool {
 	}
 }
 
+// IsNilValue reports whether v is nil or a nillable type (chan, func,
+// interface, map, pointer, slice) whose underlying value is nil.
 func IsNilValue(v any) bool {
 	if v == nil {
 		return true
@@ -328,6 +366,10 @@ func IsNilValue(v any) bool {
 	}
 }
 
+// MarshalJSON marshals the given fields and extension properties into a JSON
+// object. Each field's inclusion is governed by its [OmitType]. Extension
+// entries are merged into the output, allowing OpenAPI specification
+// extensions (x-* fields).
 func MarshalJSON(fields []JSONFieldInfo, extensions map[string]any) ([]byte, error) {
 	value := make(map[string]any, len(extensions)+len(fields))
 

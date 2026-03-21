@@ -18,6 +18,9 @@ import (
 	"github.com/MeGaNeKoS/neoma/validation"
 )
 
+// ValidateStrictCasing controls whether property name matching during
+// validation is case-sensitive. When false (the default), property names
+// are matched case-insensitively.
 var ValidateStrictCasing = false
 
 var rxHostname = regexp.MustCompile(`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`)
@@ -26,12 +29,17 @@ var rxJSONPointer = regexp.MustCompile("^(?:/(?:[^~/]|~0|~1)*)*$")
 var rxRelJSONPointer = regexp.MustCompile("^(?:0|[1-9][0-9]*)(?:#|(?:/(?:[^~/]|~0|~1)*)*)$")
 var rxBase64 = regexp.MustCompile(`^[a-zA-Z0-9+/_-]+=*$`)
 
+// ModelValidator validates Go values against their auto-generated JSON
+// Schemas. It maintains a reusable registry, path buffer, and result to
+// reduce allocations across repeated validations.
 type ModelValidator struct {
 	registry core.Registry
 	pb       *core.PathBuffer
 	result   *core.ValidateResult
 }
 
+// Validate validates a value against the schema for the given type, returning
+// any validation errors.
 func (v *ModelValidator) Validate(typ reflect.Type, value any) []error {
 	v.pb.Reset()
 	v.result.Reset()
@@ -49,6 +57,7 @@ func (v *ModelValidator) Validate(typ reflect.Type, value any) []error {
 	return nil
 }
 
+// NewModelValidator returns a new ModelValidator with a default registry.
 func NewModelValidator() *ModelValidator {
 	return &ModelValidator{
 		registry: NewMapRegistry(DefaultSchemaNamer),
@@ -57,6 +66,9 @@ func NewModelValidator() *ModelValidator {
 	}
 }
 
+// Validate checks a value against a schema, appending any violations to res.
+// It resolves $ref references, enforces type constraints, format validation,
+// and composition keywords (oneOf, anyOf, allOf, not).
 func Validate(r core.Registry, s *core.Schema, path *core.PathBuffer, mode core.ValidateMode, v any, res *core.ValidateResult) {
 	if s == nil {
 		return

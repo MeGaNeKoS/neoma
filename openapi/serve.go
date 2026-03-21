@@ -11,6 +11,8 @@ import (
 
 var rxSchema = regexp.MustCompile(`#/components/schemas/([^"]+)`)
 
+// RegisterSpecRoutes registers HTTP routes that serve the public OpenAPI spec
+// in JSON and YAML formats, and optionally individual schema routes.
 func RegisterSpecRoutes(adapter core.Adapter, oapi *core.OpenAPI, config core.Config) {
 	if config.OpenAPIPath != "" {
 		registerOpenAPIRoutes(adapter, oapi, config)

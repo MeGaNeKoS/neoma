@@ -8,6 +8,8 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// ParseDeepObjectQuery extracts key-value pairs from query parameters encoded
+// in OpenAPI deepObject style (e.g., "filter[name]=value").
 func ParseDeepObjectQuery(query url.Values, name string) map[string]string {
 	result := make(map[string]string)
 	for key, values := range query {
@@ -23,6 +25,9 @@ func ParseDeepObjectQuery(query url.Values, name string) map[string]string {
 	return result
 }
 
+// SetDeepObjectValue populates a struct or map field from deep object query
+// data, recording validation errors in res. It returns the parsed key-value
+// pairs as a map for further validation.
 func SetDeepObjectValue(pb *core.PathBuffer, res *core.ValidateResult, f reflect.Value, data map[string]string) map[string]any {
 	t := f.Type()
 	result := make(map[string]any)

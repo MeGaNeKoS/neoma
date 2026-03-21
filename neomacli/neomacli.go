@@ -1,3 +1,5 @@
+// Package neomacli provides a CLI harness for running neoma-based API servers
+// with graceful shutdown, signal handling, and customizable options.
 package neomacli
 
 import (
@@ -23,20 +25,24 @@ var optionsKey contextKey = "neoma/cli/options"
 
 var durationType = reflect.TypeFor[time.Duration]()
 
+// Logger is the interface used by the CLI for printing status messages.
 type Logger interface {
 	Println(args ...any)
 }
 
+// CLI is the interface for a runnable command-line application.
 type CLI interface {
 	Run()
 	Root() *cobra.Command
 }
 
+// Hooks allows registering callbacks that run when the server starts and stops.
 type Hooks interface {
 	OnStart(func())
 	OnStop(func())
 }
 
+// Option is a functional option for configuring the CLI.
 type Option func(*cliConfig)
 
 type defaultLogger struct {
@@ -224,6 +230,8 @@ type cliConfig struct {
 	logger Logger
 }
 
+// New creates a new CLI instance that parses the given options type from flags
+// and environment variables, then calls onParsed to set up the server.
 func New[O any](onParsed func(Hooks, *O), opts ...Option) CLI {
 	cfg := &cliConfig{
 		logger: &defaultLogger{w: os.Stderr},
@@ -274,12 +282,15 @@ func New[O any](onParsed func(Hooks, *O), opts ...Option) CLI {
 	return c
 }
 
+// WithLogger returns an Option that sets the logger used by the CLI.
 func WithLogger(l Logger) Option {
 	return func(c *cliConfig) {
 		c.logger = l
 	}
 }
 
+// WithOptions returns a cobra run function that extracts the parsed options
+// from the command context and passes them to f.
 func WithOptions[Options any](f func(cmd *cobra.Command, args []string, options *Options)) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, s []string) {
 		options, _ := cmd.Context().Value(optionsKey).(*Options)

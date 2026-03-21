@@ -1,3 +1,4 @@
+// Package neomaecho provides a neoma adapter for the Echo v4 web framework.
 package neomaecho
 
 import (
@@ -15,8 +16,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// MultipartMaxMemory is the maximum memory in bytes used for parsing multipart forms.
 var MultipartMaxMemory int64 = 8 * 1024
 
+// Unwrap extracts the underlying echo.Context from a neoma Context.
+// It panics if the context was not created by this adapter.
 func Unwrap(ctx core.Context) echo.Context {
 	c, ok := core.UnwrapContext(ctx).(*echoCtx)
 	if !ok {
@@ -162,14 +166,17 @@ func (a *echoAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.Handler.ServeHTTP(w, r)
 }
 
+// NewAdapter creates a new neoma Adapter wrapping the given Echo instance.
 func NewAdapter(r *echo.Echo) core.Adapter {
 	return &echoAdapter{Handler: r, router: r}
 }
 
+// NewAdapterWithGroup creates a new neoma Adapter that registers routes on the given Echo Group.
 func NewAdapterWithGroup(r *echo.Echo, g *echo.Group) core.Adapter {
 	return &echoAdapter{Handler: r, router: g}
 }
 
+// New creates a new neoma API using the given Echo instance and configuration.
 func New(r *echo.Echo, config core.Config) core.API {
 	return neoma.NewAPI(config, NewAdapter(r))
 }

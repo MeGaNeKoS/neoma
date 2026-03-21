@@ -1,5 +1,7 @@
 package core
 
+// Contact represents the contact information for the exposed API, as defined
+// in the OpenAPI 3.x specification.
 type Contact struct {
 	Name       string         `yaml:"name,omitempty"`
 	URL        string         `yaml:"url,omitempty"`
@@ -7,6 +9,7 @@ type Contact struct {
 	Extensions map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Contact to JSON with support for extensions.
 func (c *Contact) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"name", c.Name, OmitEmpty},
@@ -15,6 +18,8 @@ func (c *Contact) MarshalJSON() ([]byte, error) {
 	}, c.Extensions)
 }
 
+// License represents the license information for the exposed API, as defined
+// in the OpenAPI 3.x specification.
 type License struct {
 	Name       string         `yaml:"name"`
 	Identifier string         `yaml:"identifier,omitempty"`
@@ -22,6 +27,7 @@ type License struct {
 	Extensions map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the License to JSON with support for extensions.
 func (l *License) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"name", l.Name, OmitNever},
@@ -30,6 +36,8 @@ func (l *License) MarshalJSON() ([]byte, error) {
 	}, l.Extensions)
 }
 
+// Info represents the metadata about the API, as defined in the OpenAPI 3.x
+// specification. The Title and Version fields are required.
 type Info struct {
 	Title          string         `yaml:"title"`
 	Description    string         `yaml:"description,omitempty"`
@@ -40,6 +48,7 @@ type Info struct {
 	Extensions     map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Info to JSON with support for extensions.
 func (i *Info) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"title", i.Title, OmitNever},
@@ -51,6 +60,8 @@ func (i *Info) MarshalJSON() ([]byte, error) {
 	}, i.Extensions)
 }
 
+// ServerVariable represents a server variable for server URL template
+// substitution, as defined in the OpenAPI 3.x specification.
 type ServerVariable struct {
 	Enum        []string       `yaml:"enum,omitempty"`
 	Default     string         `yaml:"default"`
@@ -58,6 +69,7 @@ type ServerVariable struct {
 	Extensions  map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the ServerVariable to JSON with support for extensions.
 func (v *ServerVariable) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"enum", v.Enum, OmitEmpty},
@@ -66,6 +78,8 @@ func (v *ServerVariable) MarshalJSON() ([]byte, error) {
 	}, v.Extensions)
 }
 
+// Server represents a server that hosts the API, as defined in the OpenAPI 3.x
+// specification. The URL field may contain variable substitutions.
 type Server struct {
 	URL         string                     `yaml:"url"`
 	Description string                     `yaml:"description,omitempty"`
@@ -73,6 +87,7 @@ type Server struct {
 	Extensions  map[string]any             `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Server to JSON with support for extensions.
 func (s *Server) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"url", s.URL, OmitNever},
@@ -81,6 +96,8 @@ func (s *Server) MarshalJSON() ([]byte, error) {
 	}, s.Extensions)
 }
 
+// Example represents an example value for a media type, parameter, or schema,
+// as defined in the OpenAPI 3.x specification.
 type Example struct {
 	Ref           string         `yaml:"$ref,omitempty"`
 	Summary       string         `yaml:"summary,omitempty"`
@@ -90,6 +107,7 @@ type Example struct {
 	Extensions    map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Example to JSON with support for extensions.
 func (e *Example) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"$ref", e.Ref, OmitEmpty},
@@ -100,6 +118,8 @@ func (e *Example) MarshalJSON() ([]byte, error) {
 	}, e.Extensions)
 }
 
+// Encoding represents a single encoding definition applied to a single schema
+// property within a media type, as defined in the OpenAPI 3.x specification.
 type Encoding struct {
 	ContentType   string             `yaml:"contentType,omitempty"`
 	Headers       map[string]*Header `yaml:"headers,omitempty"`
@@ -109,6 +129,7 @@ type Encoding struct {
 	Extensions    map[string]any     `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Encoding to JSON with support for extensions.
 func (e *Encoding) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"contentType", e.ContentType, OmitEmpty},
@@ -119,6 +140,8 @@ func (e *Encoding) MarshalJSON() ([]byte, error) {
 	}, e.Extensions)
 }
 
+// MediaType represents a media type with a schema and optional examples, as
+// defined in the OpenAPI 3.x specification.
 type MediaType struct {
 	Schema     *Schema              `yaml:"schema,omitempty"`
 	Example    any                  `yaml:"example,omitempty"`
@@ -127,6 +150,7 @@ type MediaType struct {
 	Extensions map[string]any       `yaml:",inline"`
 }
 
+// MarshalJSON serializes the MediaType to JSON with support for extensions.
 func (m *MediaType) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"schema", m.Schema, OmitEmpty},
@@ -136,6 +160,8 @@ func (m *MediaType) MarshalJSON() ([]byte, error) {
 	}, m.Extensions)
 }
 
+// Param represents a parameter passed to an operation via path, query, header,
+// or cookie, as defined in the OpenAPI 3.x specification.
 type Param struct {
 	Ref             string              `yaml:"$ref,omitempty"`
 	Name            string              `yaml:"name,omitempty"`
@@ -153,6 +179,7 @@ type Param struct {
 	Extensions      map[string]any      `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Param to JSON with support for extensions.
 func (p *Param) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"$ref", p.Ref, OmitEmpty},
@@ -171,8 +198,12 @@ func (p *Param) MarshalJSON() ([]byte, error) {
 	}, p.Extensions)
 }
 
+// Header is an alias for Param, representing an HTTP header parameter as
+// defined in the OpenAPI 3.x specification.
 type Header = Param
 
+// RequestBody represents the request body for an operation, as defined in the
+// OpenAPI 3.x specification.
 type RequestBody struct {
 	Ref         string                `yaml:"$ref,omitempty"`
 	Description string                `yaml:"description,omitempty"`
@@ -181,6 +212,7 @@ type RequestBody struct {
 	Extensions  map[string]any        `yaml:",inline"`
 }
 
+// MarshalJSON serializes the RequestBody to JSON with support for extensions.
 func (r *RequestBody) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"$ref", r.Ref, OmitEmpty},
@@ -190,6 +222,8 @@ func (r *RequestBody) MarshalJSON() ([]byte, error) {
 	}, r.Extensions)
 }
 
+// Link represents a possible design-time link for a response, as defined in
+// the OpenAPI 3.x specification.
 type Link struct {
 	Ref          string         `yaml:"$ref,omitempty"`
 	OperationRef string         `yaml:"operationRef,omitempty"`
@@ -201,6 +235,7 @@ type Link struct {
 	Extensions   map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Link to JSON with support for extensions.
 func (l *Link) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"$ref", l.Ref, OmitEmpty},
@@ -213,6 +248,8 @@ func (l *Link) MarshalJSON() ([]byte, error) {
 	}, l.Extensions)
 }
 
+// Response represents a single response from an API operation, including
+// headers, content, and links, as defined in the OpenAPI 3.x specification.
 type Response struct {
 	Ref         string                `yaml:"$ref,omitempty"`
 	Description string                `yaml:"description,omitempty"`
@@ -222,6 +259,7 @@ type Response struct {
 	Extensions  map[string]any        `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Response to JSON with support for extensions.
 func (r *Response) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"$ref", r.Ref, OmitEmpty},
@@ -232,6 +270,8 @@ func (r *Response) MarshalJSON() ([]byte, error) {
 	}, r.Extensions)
 }
 
+// PathItem represents the operations available on a single API path, as
+// defined in the OpenAPI 3.x specification.
 type PathItem struct {
 	Ref         string         `yaml:"$ref,omitempty"`
 	Summary     string         `yaml:"summary,omitempty"`
@@ -249,6 +289,7 @@ type PathItem struct {
 	Extensions  map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the PathItem to JSON with support for extensions.
 func (p *PathItem) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"$ref", p.Ref, OmitEmpty},
@@ -267,12 +308,15 @@ func (p *PathItem) MarshalJSON() ([]byte, error) {
 	}, p.Extensions)
 }
 
+// ExternalDocs represents a reference to external documentation, as defined in
+// the OpenAPI 3.x specification.
 type ExternalDocs struct {
 	Description string         `yaml:"description,omitempty"`
 	URL         string         `yaml:"url"`
 	Extensions  map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the ExternalDocs to JSON with support for extensions.
 func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"description", e.Description, OmitEmpty},
@@ -280,6 +324,9 @@ func (e *ExternalDocs) MarshalJSON() ([]byte, error) {
 	}, e.Extensions)
 }
 
+// Tag represents a tag for API documentation control, allowing operations to
+// be grouped by resources or other qualifiers, as defined in the OpenAPI 3.x
+// specification.
 type Tag struct {
 	Name         string         `yaml:"name"`
 	Description  string         `yaml:"description,omitempty"`
@@ -288,6 +335,7 @@ type Tag struct {
 	Extensions   map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Tag to JSON with support for extensions.
 func (t *Tag) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"name", t.Name, OmitNever},
@@ -297,6 +345,8 @@ func (t *Tag) MarshalJSON() ([]byte, error) {
 	}, t.Extensions)
 }
 
+// OAuthFlow represents the configuration for an OAuth 2.0 flow, as defined in
+// the OpenAPI 3.x specification.
 type OAuthFlow struct {
 	AuthorizationURL string            `yaml:"authorizationUrl,omitempty"`
 	TokenURL         string            `yaml:"tokenUrl"`
@@ -305,6 +355,7 @@ type OAuthFlow struct {
 	Extensions       map[string]any    `yaml:",inline"`
 }
 
+// MarshalJSON serializes the OAuthFlow to JSON with support for extensions.
 func (o *OAuthFlow) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"authorizationUrl", o.AuthorizationURL, OmitEmpty},
@@ -314,6 +365,9 @@ func (o *OAuthFlow) MarshalJSON() ([]byte, error) {
 	}, o.Extensions)
 }
 
+// OAuthFlows represents the available OAuth 2.0 flows (implicit, password,
+// client credentials, authorization code), as defined in the OpenAPI 3.x
+// specification.
 type OAuthFlows struct {
 	Implicit          *OAuthFlow     `yaml:"implicit,omitempty"`
 	Password          *OAuthFlow     `yaml:"password,omitempty"`
@@ -322,6 +376,7 @@ type OAuthFlows struct {
 	Extensions        map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the OAuthFlows to JSON with support for extensions.
 func (o *OAuthFlows) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"implicit", o.Implicit, OmitEmpty},
@@ -331,6 +386,9 @@ func (o *OAuthFlows) MarshalJSON() ([]byte, error) {
 	}, o.Extensions)
 }
 
+// SecurityScheme represents a security scheme that can be used by API
+// operations (e.g., HTTP authentication, API key, OAuth 2.0, OpenID Connect),
+// as defined in the OpenAPI 3.x specification.
 type SecurityScheme struct {
 	Type             string         `yaml:"type"`
 	Description      string         `yaml:"description,omitempty"`
@@ -343,6 +401,7 @@ type SecurityScheme struct {
 	Extensions       map[string]any `yaml:",inline"`
 }
 
+// MarshalJSON serializes the SecurityScheme to JSON with support for extensions.
 func (s *SecurityScheme) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"type", s.Type, OmitNever},
@@ -356,6 +415,8 @@ func (s *SecurityScheme) MarshalJSON() ([]byte, error) {
 	}, s.Extensions)
 }
 
+// Components holds a set of reusable objects for the API specification,
+// as defined in the OpenAPI 3.x specification.
 type Components struct {
 	Schemas         Registry                      `yaml:"schemas,omitempty"`
 	Responses       map[string]*Response          `yaml:"responses,omitempty"`
@@ -369,6 +430,7 @@ type Components struct {
 	Extensions      map[string]any                `yaml:",inline"`
 }
 
+// MarshalJSON serializes the Components to JSON with support for extensions.
 func (c *Components) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"schemas", c.Schemas, OmitEmpty},
@@ -383,6 +445,8 @@ func (c *Components) MarshalJSON() ([]byte, error) {
 	}, c.Extensions)
 }
 
+// OpenAPI represents the root document object of an OpenAPI 3.x specification.
+// It contains all API metadata, paths, components, and security definitions.
 type OpenAPI struct {
 	OpenAPI string `yaml:"openapi"`
 
@@ -400,6 +464,7 @@ type OpenAPI struct {
 	OnAddOperation []func(oapi *OpenAPI, op *Operation) `yaml:"-"`
 }
 
+// MarshalJSON serializes the OpenAPI document to JSON with support for extensions.
 func (o *OpenAPI) MarshalJSON() ([]byte, error) {
 	return MarshalJSON([]JSONFieldInfo{
 		{"openapi", o.OpenAPI, OmitNever},
@@ -413,6 +478,8 @@ func (o *OpenAPI) MarshalJSON() ([]byte, error) {
 	}, o.Extensions)
 }
 
+// AddOperation registers an operation under its path and method in the spec,
+// then invokes any OnAddOperation hooks.
 func (o *OpenAPI) AddOperation(op *Operation) {
 	if o.Paths == nil {
 		o.Paths = map[string]*PathItem{}

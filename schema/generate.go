@@ -17,6 +17,8 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// DefaultArrayNullable controls whether generated schemas for slice types
+// are nullable by default. Set to false to make arrays non-nullable.
 var DefaultArrayNullable = true
 
 var (
@@ -199,6 +201,9 @@ func convertType(fieldName string, t reflect.Type, v any) any {
 	return converted.Interface()
 }
 
+// JsonTagValue parses a struct tag value string into a Go value according
+// to the schema's type. Strings are returned as-is, while other types are
+// parsed as JSON.
 func JsonTagValue(r core.Registry, fieldName string, s *core.Schema, value string) any {
 	if s.Ref != "" {
 		s = r.SchemaFromRef(s.Ref)
@@ -239,6 +244,8 @@ func jsonTag(r core.Registry, f reflect.StructField, s *core.Schema, name string
 	return nil
 }
 
+// ConvertType converts a value to the target type, handling slices, pointers,
+// and scalar conversions. It panics if the conversion is not possible.
 func ConvertType(fieldName string, t reflect.Type, v any) any {
 	return convertType(fieldName, t, v)
 }
@@ -291,6 +298,9 @@ func getFields(typ reflect.Type, visited map[reflect.Type]struct{}) []fieldInfo 
 	return fields
 }
 
+// FromField generates a schema for a struct field, applying struct tag
+// constraints such as doc, format, default, enum, minimum, maximum, pattern,
+// and others.
 func FromField(registry core.Registry, f reflect.StructField, hint string) *core.Schema {
 	fs := registry.Schema(f.Type, true, hint)
 	if fs == nil {
@@ -444,6 +454,9 @@ func buildCompositionRefs(tagValue string) []*core.Schema {
 	return refs
 }
 
+// FromType generates a JSON Schema from a Go type. It handles primitives,
+// slices, maps, structs, and types that implement core.SchemaProvider or
+// core.SchemaTransformer.
 func FromType(r core.Registry, t reflect.Type) *core.Schema {
 	s := schemaFromType(r, t)
 	if s == nil {

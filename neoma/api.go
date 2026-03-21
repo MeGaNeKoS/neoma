@@ -120,6 +120,8 @@ func defaultGenerateSummary(method, path string) string {
 	return strings.ToUpper(phrase[:1]) + phrase[1:]
 }
 
+// NewAPI creates a new API instance from the given configuration and router
+// adapter, registering the default OpenAPI spec and documentation routes.
 func NewAPI(config core.Config, a core.Adapter) core.API {
 	for i := 0; i < len(config.CreateHooks); i++ {
 		config = config.CreateHooks[i](config)
@@ -215,6 +217,8 @@ func generateConvenienceSummary(method, path string, response any) string {
 	return defaultGenerateSummary(action, path)
 }
 
+// WriteErr writes an error response using the API's configured error handler,
+// serializing the error in the negotiated content type.
 func WriteErr(api core.API, ctx core.Context, status int, msg string, errs ...error) error {
 	se := api.ErrorHandler().NewErrorWithContext(ctx, status, msg, errs...)
 	status = se.StatusCode()

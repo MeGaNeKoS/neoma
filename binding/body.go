@@ -13,18 +13,24 @@ import (
 )
 
 
+// ContextError represents an HTTP error with a status code, message, and
+// optional underlying errors.
 type ContextError struct {
 	Code int
 	Msg  string
 	Errs []error
 }
 
+// Error returns the error message string.
 func (e *ContextError) Error() string {
 	return e.Msg
 }
 
+// IntoUnmarshaler is a function type that deserializes bytes into a value.
 type IntoUnmarshaler = func(data []byte, v any) error
 
+// BodyProcessingConfig holds the parameters needed to validate and unmarshal
+// a request body into the target input struct.
 type BodyProcessingConfig struct {
 	Body           []byte
 	Op             core.Operation
@@ -38,6 +44,8 @@ type BodyProcessingConfig struct {
 }
 
 
+// ReadBody reads the request body from ctx into buf, enforcing the given
+// maxBytes limit. It returns a ContextError on timeout or size violation.
 func ReadBody(buf io.Writer, ctx core.Context, maxBytes int64) *ContextError {
 	reader := ctx.BodyReader()
 	if reader == nil {
@@ -72,6 +80,9 @@ func ReadBody(buf io.Writer, ctx core.Context, maxBytes int64) *ContextError {
 	return nil
 }
 
+// ProcessRegularMsgBody validates and unmarshals a request body according to
+// the provided configuration. It returns the error HTTP status code (or -1 if
+// none) and any ContextError encountered.
 func ProcessRegularMsgBody(cfg BodyProcessingConfig) (int, *ContextError) {
 	errStatus := -1
 	if len(cfg.Body) == 0 {

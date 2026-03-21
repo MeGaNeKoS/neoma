@@ -10,17 +10,22 @@ import (
 	"github.com/MeGaNeKoS/neoma/core"
 )
 
+// RegistryConfig controls schema generation behavior for a registry.
 type RegistryConfig struct {
 	AllowAdditionalPropertiesByDefault bool
 	FieldsOptionalByDefault            bool
 }
 
+// ConfigProvider is implemented by registries that expose their configuration.
 type ConfigProvider interface {
 	RegistryConfig() RegistryConfig
 }
 
 const schemaRefPrefix = "#/components/schemas/"
 
+// MapRegistry is the default core.Registry implementation that stores schemas
+// in a map keyed by type name. It handles schema generation, caching, and
+// reference resolution for OpenAPI components.
 type MapRegistry struct {
 	schemas map[string]*core.Schema
 	types   map[string]reflect.Type
@@ -30,6 +35,9 @@ type MapRegistry struct {
 	config  RegistryConfig
 }
 
+// Schema returns the schema for the given type, generating and caching it if
+// needed. When allowRef is true and the type is a named struct, a $ref schema
+// is returned instead of the full definition.
 func (r *MapRegistry) Schema(t reflect.Type, allowRef bool, hint string) *core.Schema {
 	origType := t
 	t = deref(t)
@@ -97,6 +105,8 @@ func (r *MapRegistry) Schema(t reflect.Type, allowRef bool, hint string) *core.S
 	return s
 }
 
+// SchemaFromRef resolves a $ref string to its corresponding schema, or returns
+// nil if the ref does not match a known schema.
 func (r *MapRegistry) SchemaFromRef(ref string) *core.Schema {
 	if !strings.HasPrefix(ref, schemaRefPrefix) {
 		return nil
@@ -104,30 +114,40 @@ func (r *MapRegistry) SchemaFromRef(ref string) *core.Schema {
 	return r.schemas[ref[len(schemaRefPrefix):]]
 }
 
+// TypeFromRef returns the Go type associated with the given $ref string.
 func (r *MapRegistry) TypeFromRef(ref string) reflect.Type {
 	return r.types[ref[len(schemaRefPrefix):]]
 }
 
+// Map returns the underlying map of schema names to schema definitions.
 func (r *MapRegistry) Map() map[string]*core.Schema {
 	return r.schemas
 }
 
+// MarshalJSON serializes the registry's schemas as JSON.
 func (r *MapRegistry) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.schemas)
 }
 
+// MarshalYAML serializes the registry's schemas as YAML.
 func (r *MapRegistry) MarshalYAML() (any, error) {
 	return r.schemas, nil
 }
 
+// RegisterTypeAlias registers an alias so that schemas requested for type t
+// are generated using the alias type instead.
 func (r *MapRegistry) RegisterTypeAlias(t reflect.Type, alias reflect.Type) {
 	r.aliases[t] = alias
 }
 
+// RegistryConfig returns the configuration for this registry.
 func (r *MapRegistry) RegistryConfig() RegistryConfig {
 	return r.config
 }
 
+// DefaultSchemaNamer generates a human-readable schema name from a Go type.
+// It strips package paths, uppercases the first letter, and handles generics
+// and slices (e.g. []int becomes ListInt).
 func DefaultSchemaNamer(t reflect.Type, hint string) string {
 	name := deref(t).Name()
 
@@ -165,6 +185,8 @@ func DefaultSchemaNamer(t reflect.Type, hint string) string {
 	return result.String()
 }
 
+// NewMapRegistry creates a new MapRegistry with the given naming function.
+// Use DefaultSchemaNamer for the standard naming convention.
 func NewMapRegistry(namer func(t reflect.Type, hint string) string) *MapRegistry {
 	return &MapRegistry{
 		schemas: map[string]*core.Schema{},
@@ -179,6 +201,8 @@ func NewMapRegistry(namer func(t reflect.Type, hint string) string) *MapRegistry
 	}
 }
 
+// NewMapRegistryWithConfig creates a new MapRegistry with the given naming
+// function and configuration overrides.
 func NewMapRegistryWithConfig(namer func(t reflect.Type, hint string) string, config RegistryConfig) *MapRegistry {
 	r := NewMapRegistry(namer)
 	r.config = config

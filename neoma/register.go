@@ -40,6 +40,8 @@ var bufPool = sync.Pool{
 	},
 }
 
+// Register wires up a typed handler for the given operation, performing
+// automatic parameter binding, input validation, and OpenAPI documentation.
 func Register[I, O any](api core.API, op core.Operation, handler func(context.Context, *I) (*O, error)) {
 	oapi := api.OpenAPI()
 	registry := oapi.Components.Schemas
