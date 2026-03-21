@@ -1269,8 +1269,13 @@ func TestDefineErrorsWithManualExamples(t *testing.T) {
 		OperationID: "test",
 		Errors:      []int{400},
 		Responses:   map[string]*core.Response{},
-		ErrorExamples: map[int]any{
-			400: map[string]string{"custom": "example"},
+		ErrorExamples: map[int]map[string]*core.Example{
+			400: {
+				"Validation Error": {
+					Summary: "Invalid input",
+					Value:   map[string]string{"custom": "example"},
+				},
+			},
 		},
 	}
 
@@ -1281,7 +1286,44 @@ func TestDefineErrorsWithManualExamples(t *testing.T) {
 	ct := factory.ErrorContentType("application/json")
 	mt := resp400.Content[ct]
 	require.NotNil(t, mt)
-	assert.NotNil(t, mt.Example)
+	assert.NotNil(t, mt.Example, "single named example should set mt.Example")
+}
+
+func TestDefineErrorsWithMultipleExamples(t *testing.T) {
+	registry := newRegistry()
+	factory := errors.NewRFC9457Handler()
+
+	op := &core.Operation{
+		Method:      "POST",
+		Path:        "/test",
+		OperationID: "test",
+		Errors:      []int{400},
+		Responses:   map[string]*core.Response{},
+		ErrorExamples: map[int]map[string]*core.Example{
+			400: {
+				"Validation Error": {
+					Summary: "Field validation failed",
+					Value:   map[string]any{"status": 400, "detail": "name is required"},
+				},
+				"Bad Payload": {
+					Summary: "Malformed JSON",
+					Value:   map[string]any{"status": 400, "detail": "invalid JSON"},
+				},
+			},
+		},
+	}
+
+	openapi.DefineErrors(op, registry, factory)
+
+	resp400 := op.Responses["400"]
+	require.NotNil(t, resp400)
+	ct := factory.ErrorContentType("application/json")
+	mt := resp400.Content[ct]
+	require.NotNil(t, mt)
+	assert.Nil(t, mt.Example, "multiple examples should not set mt.Example")
+	assert.Len(t, mt.Examples, 2)
+	assert.NotNil(t, mt.Examples["Validation Error"])
+	assert.NotNil(t, mt.Examples["Bad Payload"])
 }
 
 

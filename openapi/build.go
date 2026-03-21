@@ -44,8 +44,14 @@ func DefineErrors(op *core.Operation, registry core.Registry, factory core.Error
 		if mt == nil {
 			continue
 		}
-		if manual, ok := op.ErrorExamples[code]; ok {
-			mt.Example = manual
+		if examples, ok := op.ErrorExamples[code]; ok && len(examples) > 0 {
+			if len(examples) == 1 {
+				for _, ex := range examples {
+					mt.Example = ex.Value
+				}
+			} else {
+				mt.Examples = examples
+			}
 		} else if des, ok := discoveredByStatus[code]; ok && len(des) > 0 {
 			applyDiscoveredExamples(mt, des, factory)
 		} else {

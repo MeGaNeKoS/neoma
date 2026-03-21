@@ -26,7 +26,7 @@ type Operation struct {
 	SkipValidateParams           bool                         `yaml:"-"`
 	SkipValidateBody             bool                         `yaml:"-"`
 	SkipDiscoveredErrors         bool                         `yaml:"-"`
-	ErrorExamples                map[int]any                  `yaml:"-"`
+	ErrorExamples                map[int]map[string]*Example   `yaml:"-"`
 	RejectUnknownQueryParameters bool                         `yaml:"-"`
 	Hidden                       bool                         `yaml:"-"`
 	HiddenParameters             []*Param                     `yaml:"-"`
