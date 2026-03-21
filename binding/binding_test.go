@@ -3099,7 +3099,7 @@ func TestSetupMultipartRequestBody(t *testing.T) {
 
 	op := &core.Operation{Method: "POST", Path: "/upload", OperationID: "upload"}
 	fields := AnalyzeMultipartFields(reflect.TypeFor[formInput]())
-	SetupMultipartRequestBody(op, fields)
+	SetupMultipartRequestBody(op, newRegistry(), fields)
 
 	require.NotNil(t, op.RequestBody)
 	require.NotNil(t, op.RequestBody.Content["multipart/form-data"])

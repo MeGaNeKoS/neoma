@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/MeGaNeKoS/neoma/core"
+	"github.com/MeGaNeKoS/neoma/schema"
 )
 
 var (
@@ -25,11 +26,13 @@ func (m *MultipartFormFiles[T]) Data() T { return m.data }
 // including its form name, struct index path, and whether it represents a file
 // upload.
 type MultipartFieldInfo struct {
-	Name    string
-	Index   []int
-	IsFile  bool
-	IsSlice bool
-	Type    reflect.Type
+	Name        string
+	Index       []int
+	IsFile      bool
+	IsSlice     bool
+	Required    bool
+	Type        reflect.Type
+	StructField reflect.StructField
 }
 
 // MultipartProcessingConfig holds the parameters for processing a multipart
@@ -62,9 +65,14 @@ func AnalyzeMultipartFields(t reflect.Type) []MultipartFieldInfo {
 
 		ft := f.Type
 		info := MultipartFieldInfo{
-			Name:  name,
-			Index: f.Index,
-			Type:  ft,
+			Name:        name,
+			Index:       f.Index,
+			Type:        ft,
+			StructField: f,
+		}
+
+		if f.Tag.Get("required") == "true" {
+			info.Required = true
 		}
 
 		switch ft {
@@ -105,6 +113,12 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 		if fi.IsFile {
 			fileHeaders := form.File[fi.Name]
 			if len(fileHeaders) == 0 {
+				if fi.Required {
+					return &ContextError{
+						Code: http.StatusUnprocessableEntity,
+						Msg:  "required file field is missing: " + fi.Name,
+					}
+				}
 				continue
 			}
 			if fi.IsSlice {
@@ -113,7 +127,7 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 					opened, openErr := fh.Open()
 					if openErr != nil {
 						return &ContextError{
-							Code: http.StatusBadRequest,
+							Code: http.StatusUnprocessableEntity,
 							Msg:  "failed to open uploaded file",
 							Errs: []error{openErr},
 						}
@@ -138,6 +152,12 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 
 		values := form.Value[fi.Name]
 		if len(values) == 0 {
+			if fi.Required {
+				return &ContextError{
+					Code: http.StatusUnprocessableEntity,
+					Msg:  "required form field is missing: " + fi.Name,
+				}
+			}
 			continue
 		}
 
@@ -161,7 +181,7 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 
 // SetupMultipartRequestBody configures the operation's OpenAPI request body
 // schema for multipart/form-data based on the provided field metadata.
-func SetupMultipartRequestBody(op *core.Operation, fields []MultipartFieldInfo) {
+func SetupMultipartRequestBody(op *core.Operation, registry core.Registry, fields []MultipartFieldInfo) {
 	initRequestBody(op)
 
 	mt := op.RequestBody.Content["multipart/form-data"]
@@ -194,28 +214,14 @@ func SetupMultipartRequestBody(op *core.Operation, fields []MultipartFieldInfo) 
 				}
 			}
 		} else {
-			mt.Schema.Properties[fi.Name] = schemaForType(fi.Type)
+			mt.Schema.Properties[fi.Name] = schema.FromField(registry, fi.StructField, fi.Name)
+		}
+		if fi.Required {
+			mt.Schema.Required = append(mt.Schema.Required, fi.Name)
 		}
 	}
 }
 
-func schemaForType(t reflect.Type) *core.Schema {
-	t = core.Deref(t)
-	switch t.Kind() {
-	case reflect.String:
-		return &core.Schema{Type: core.TypeString}
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return &core.Schema{Type: core.TypeInteger}
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return &core.Schema{Type: core.TypeInteger}
-	case reflect.Float32, reflect.Float64:
-		return &core.Schema{Type: core.TypeNumber}
-	case reflect.Bool:
-		return &core.Schema{Type: core.TypeBoolean}
-	default:
-		return &core.Schema{Type: core.TypeString}
-	}
-}
 
 // HasMultipartFields reports whether the struct type t contains any exported
 // fields with a "form" tag that represent file uploads.

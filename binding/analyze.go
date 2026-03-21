@@ -61,7 +61,9 @@ func AnalyzeInput[I any](op *core.Operation, registry core.Registry, fieldsOptio
 			meta.InputBodyIndex = f.Index
 			meta.MultipartFields = multipartFields
 			meta.MultipartBodyIndex = f.Index
-			SetupMultipartRequestBody(op, multipartFields)
+			SetupMultipartRequestBody(op, registry, multipartFields)
+			ensureBodyReadTimeout(op)
+			ensureMaxBodyBytes(op)
 		} else {
 			meta.HasInputBody = true
 			meta.InputBodyIndex = f.Index
