@@ -1,8 +1,11 @@
 package neoma_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"testing"
@@ -509,4 +512,153 @@ func TestOperationTagsHelper(t *testing.T) {
 	require.NotNil(t, pi)
 	assert.NotNil(t, pi.Get)
 	assert.Contains(t, pi.Get.Tags, "mytag")
+}
+
+func TestMultipartFileUpload(t *testing.T) {
+	api := newTestAPI(t)
+
+	type UploadInput struct {
+		Body struct {
+			File core.FormFile `form:"file"`
+			Name string        `form:"name"`
+		}
+	}
+	type UploadOutput struct {
+		Body struct {
+			Filename string `json:"filename"`
+			Size     int64  `json:"size"`
+			Name     string `json:"name"`
+			Content  string `json:"content"`
+		}
+	}
+
+	neoma.Post[UploadInput, UploadOutput](api, "/upload", func(_ context.Context, in *UploadInput) (*UploadOutput, error) {
+		o := &UploadOutput{}
+		o.Body.Filename = in.Body.File.Filename
+		o.Body.Size = in.Body.File.Size
+		o.Body.Name = in.Body.Name
+		data, err := io.ReadAll(in.Body.File)
+		if err != nil {
+			return nil, err
+		}
+		o.Body.Content = string(data)
+		return o, nil
+	})
+
+	// Build multipart request
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	part, err := writer.CreateFormFile("file", "test.txt")
+	require.NoError(t, err)
+	_, err = part.Write([]byte("hello multipart"))
+	require.NoError(t, err)
+	require.NoError(t, writer.WriteField("name", "my-upload"))
+	require.NoError(t, writer.Close())
+
+	resp := api.Do(http.MethodPost, "/upload",
+		"Content-Type: "+writer.FormDataContentType(),
+		bytes.NewReader(buf.Bytes()),
+	)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	assert.Equal(t, "test.txt", body["filename"])
+	assert.Equal(t, "my-upload", body["name"])
+	assert.Equal(t, "hello multipart", body["content"])
+}
+
+func TestMultipartMultipleFiles(t *testing.T) {
+	api := newTestAPI(t)
+
+	type UploadInput struct {
+		Body struct {
+			Photos []core.FormFile `form:"photos"`
+		}
+	}
+	type UploadOutput struct {
+		Body struct {
+			Count     int      `json:"count"`
+			Filenames []string `json:"filenames"`
+		}
+	}
+
+	neoma.Post[UploadInput, UploadOutput](api, "/photos", func(_ context.Context, in *UploadInput) (*UploadOutput, error) {
+		o := &UploadOutput{}
+		o.Body.Count = len(in.Body.Photos)
+		for _, f := range in.Body.Photos {
+			o.Body.Filenames = append(o.Body.Filenames, f.Filename)
+		}
+		return o, nil
+	})
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	for _, name := range []string{"a.jpg", "b.png"} {
+		part, err := writer.CreateFormFile("photos", name)
+		require.NoError(t, err)
+		_, err = part.Write([]byte("data-" + name))
+		require.NoError(t, err)
+	}
+	require.NoError(t, writer.Close())
+
+	resp := api.Do(http.MethodPost, "/photos",
+		"Content-Type: "+writer.FormDataContentType(),
+		bytes.NewReader(buf.Bytes()),
+	)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	assert.InDelta(t, 2, body["count"], 0)
+	filenames := body["filenames"].([]any)
+	assert.Equal(t, "a.jpg", filenames[0])
+	assert.Equal(t, "b.png", filenames[1])
+}
+
+func TestMultipartWithDefaults(t *testing.T) {
+	api := newTestAPI(t)
+
+	type UploadInput struct {
+		Body struct {
+			File core.FormFile `form:"file"`
+			Tag  string        `form:"tag" default:"untagged"`
+		}
+	}
+	type UploadOutput struct {
+		Body struct {
+			Filename string `json:"filename"`
+			Tag      string `json:"tag"`
+		}
+	}
+
+	neoma.Post[UploadInput, UploadOutput](api, "/upload-default", func(_ context.Context, in *UploadInput) (*UploadOutput, error) {
+		o := &UploadOutput{}
+		o.Body.Filename = in.Body.File.Filename
+		o.Body.Tag = in.Body.Tag
+		return o, nil
+	})
+
+	// Send multipart request without the "tag" field to test default
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	part, err := writer.CreateFormFile("file", "doc.pdf")
+	require.NoError(t, err)
+	_, err = part.Write([]byte("pdf content"))
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+
+	resp := api.Do(http.MethodPost, "/upload-default",
+		"Content-Type: "+writer.FormDataContentType(),
+		bytes.NewReader(buf.Bytes()),
+	)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	assert.Equal(t, "doc.pdf", body["filename"])
+	assert.Equal(t, "untagged", body["tag"])
 }

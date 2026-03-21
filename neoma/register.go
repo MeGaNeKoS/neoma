@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"mime"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -318,63 +319,83 @@ func Register[I, O any](api core.API, op core.Operation, handler func(context.Co
 				_ = ctx.SetReadDeadline(time.Time{})
 			}
 
-			buf, _ := bufPool.Get().(*bytes.Buffer)
-			bufCloser := func() {
-				if buf.Cap() <= 1024*1024 {
-					buf.Reset()
-					bufPool.Put(buf)
+			mediaType, _, _ := mime.ParseMediaType(ctx.Header("Content-Type"))
+			if len(inputMeta.MultipartFields) > 0 && mediaType == "multipart/form-data" {
+				if cErr := binding.ProcessMultipartForm(ctx, binding.MultipartProcessingConfig{
+					Value:  v.FieldByIndex(inputMeta.MultipartBodyIndex),
+					Fields: inputMeta.MultipartFields,
+				}); cErr != nil {
+					writeErrFromContext(api, ctx, cErr, *res)
+					return
 				}
-			}
-			if cErr := binding.ReadBody(buf, ctx, op.MaxBodyBytes); cErr != nil {
-				bufCloser()
-				writeErrFromContext(api, ctx, cErr, *res)
-				return
-			}
-			body := buf.Bytes()
+				inputMeta.Defaults.Every(v, func(item reflect.Value, def any) {
+					if item.IsZero() {
+						if item.Kind() == reflect.Pointer {
+							item.Set(reflect.New(item.Type().Elem()))
+							item = item.Elem()
+						}
+						item.Set(reflect.Indirect(reflect.ValueOf(def)))
+					}
+				})
+			} else {
+				buf, _ := bufPool.Get().(*bytes.Buffer)
+				bufCloser := func() {
+					if buf.Cap() <= 1024*1024 {
+						buf.Reset()
+						bufPool.Put(buf)
+					}
+				}
+				if cErr := binding.ReadBody(buf, ctx, op.MaxBodyBytes); cErr != nil {
+					bufCloser()
+					writeErrFromContext(api, ctx, cErr, *res)
+					return
+				}
+				body := buf.Bytes()
 
-			contentType := ctx.Header("Content-Type")
-			if contentType == "" {
-				if op.RequestBody != nil && op.RequestBody.Content != nil {
-					if _, ok := op.RequestBody.Content["application/json"]; ok {
-						contentType = "application/json"
-					} else {
-						for ct := range op.RequestBody.Content {
-							contentType = ct
-							break
+				contentType := ctx.Header("Content-Type")
+				if contentType == "" {
+					if op.RequestBody != nil && op.RequestBody.Content != nil {
+						if _, ok := op.RequestBody.Content["application/json"]; ok {
+							contentType = "application/json"
+						} else {
+							for ct := range op.RequestBody.Content {
+								contentType = ct
+								break
+							}
 						}
 					}
 				}
-			}
 
-			unmarshaler := func(data []byte, target any) error {
-				return api.Unmarshal(contentType, data, target)
-			}
-			validator := func(data any, vres *core.ValidateResult) {
-				pb.Reset()
-				pb.Push("body")
-				schema.Validate(registry, inputMeta.InSchema, pb, core.ModeWriteToServer, data, vres)
-			}
+				unmarshaler := func(data []byte, target any) error {
+					return api.Unmarshal(contentType, data, target)
+				}
+				validator := func(data any, vres *core.ValidateResult) {
+					pb.Reset()
+					pb.Push("body")
+					schema.Validate(registry, inputMeta.InSchema, pb, core.ModeWriteToServer, data, vres)
+				}
 
-			processErrStatus, cErr := binding.ProcessRegularMsgBody(binding.BodyProcessingConfig{
-				Body:           body,
-				Op:             op,
-				Value:          v,
-				HasInputBody:   inputMeta.HasInputBody,
-				InputBodyIndex: inputMeta.InputBodyIndex,
-				Unmarshaler:    unmarshaler,
-				Validator:      validator,
-				Defaults:       inputMeta.Defaults,
-				Result:         res,
-			})
-			if processErrStatus > 0 {
-				errStatus = processErrStatus
-			}
-			if cErr != nil {
+				processErrStatus, cErr := binding.ProcessRegularMsgBody(binding.BodyProcessingConfig{
+					Body:           body,
+					Op:             op,
+					Value:          v,
+					HasInputBody:   inputMeta.HasInputBody,
+					InputBodyIndex: inputMeta.InputBodyIndex,
+					Unmarshaler:    unmarshaler,
+					Validator:      validator,
+					Defaults:       inputMeta.Defaults,
+					Result:         res,
+				})
+				if processErrStatus > 0 {
+					errStatus = processErrStatus
+				}
+				if cErr != nil {
+					bufCloser()
+					writeErrFromContext(api, ctx, cErr, *res)
+					return
+				}
 				bufCloser()
-				writeErrFromContext(api, ctx, cErr, *res)
-				return
 			}
-			bufCloser()
 		}
 
 		inputMeta.Resolvers.EveryPB(pb, v, func(item reflect.Value, _ bool) {
