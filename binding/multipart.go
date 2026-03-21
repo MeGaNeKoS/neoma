@@ -126,7 +126,7 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 				opened, openErr := fh.Open()
 				if openErr != nil {
 					return &ContextError{
-						Code: http.StatusBadRequest,
+						Code: http.StatusUnprocessableEntity,
 						Msg:  "failed to open uploaded file",
 						Errs: []error{openErr},
 					}
@@ -150,7 +150,7 @@ func ProcessMultipartForm(ctx core.Context, cfg MultipartProcessingConfig) *Cont
 
 		if err := setFieldValue(target, values[0]); err != nil {
 			return &ContextError{
-				Code: http.StatusBadRequest,
+				Code: http.StatusUnprocessableEntity,
 				Msg:  "invalid form field value for " + fi.Name,
 				Errs: []error{err},
 			}

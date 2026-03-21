@@ -3085,7 +3085,7 @@ func TestProcessMultipartForm_InvalidFieldValue(t *testing.T) {
 	})
 
 	require.NotNil(t, ctxErr)
-	assert.Equal(t, http.StatusBadRequest, ctxErr.Code)
+	assert.Equal(t, http.StatusUnprocessableEntity, ctxErr.Code)
 	assert.Contains(t, ctxErr.Msg, "age")
 }
 
