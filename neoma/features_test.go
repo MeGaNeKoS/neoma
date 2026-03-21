@@ -127,6 +127,25 @@ func TestExcludeHiddenSchemas(t *testing.T) {
 
 	resp := api.Do(http.MethodGet, "/internal")
 	assert.Equal(t, http.StatusOK, resp.Code)
+
+	// Public spec should not contain hidden schemas.
+	specResp := api.Do(http.MethodGet, "/openapi.json")
+	assert.Equal(t, http.StatusOK, specResp.Code)
+
+	var spec map[string]any
+	require.NoError(t, json.Unmarshal(specResp.Body.Bytes(), &spec))
+	components, _ := spec["components"].(map[string]any)
+	schemas, _ := components["schemas"].(map[string]any)
+
+	assert.NotNil(t, schemas["PublicOutputBody"], "public schema should be in spec")
+	assert.Nil(t, schemas["SecretOutputBody"], "hidden schema should not be in spec")
+
+	// Individual schema endpoint should 404 for hidden schemas.
+	schemaResp := api.Do(http.MethodGet, "/schemas/SecretOutputBody.json")
+	assert.Equal(t, http.StatusNotFound, schemaResp.Code)
+
+	publicSchemaResp := api.Do(http.MethodGet, "/schemas/PublicOutputBody.json")
+	assert.Equal(t, http.StatusOK, publicSchemaResp.Code)
 }
 
 

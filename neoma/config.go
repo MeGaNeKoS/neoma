@@ -29,6 +29,7 @@ func DefaultConfig(title string, version string) core.Config {
 			Enabled: true,
 		},
 		SchemasPath:                       "/schemas",
+		ExcludeHiddenSchemas:              true,
 		Formats:                           negotiate.DefaultFormats(),
 		DefaultFormat:                     "application/json",
 		AllowAdditionalPropertiesByDefault: true,
