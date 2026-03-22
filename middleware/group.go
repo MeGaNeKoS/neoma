@@ -183,6 +183,49 @@ func (g *Group) Group(prefix string) *Group {
 	return NewGroup(g, prefix)
 }
 
+// UseDefaultTag sets a default tag for operations in this group. If an
+// operation already specifies tags, they are left unchanged.
+func (g *Group) UseDefaultTag(tag string) {
+	if tag == "" {
+		return
+	}
+	g.UseSimpleModifier(func(o *core.Operation) {
+		if len(o.Tags) == 0 {
+			o.Tags = []string{tag}
+		}
+	})
+}
+
+// UseDefaultSecurity sets a default security requirement for operations in
+// this group. If an operation already specifies security, it is left unchanged.
+func (g *Group) UseDefaultSecurity(scheme string) {
+	g.UseSimpleModifier(func(o *core.Operation) {
+		if len(o.Security) == 0 {
+			o.Security = []map[string][]string{{scheme: {}}}
+		}
+	})
+}
+
+// WithSecurity registers a security scheme in the OpenAPI spec, applies the
+// security requirement to all operations in this group, and adds the
+// middleware to the group's chain. This is a one-call replacement for
+// manually registering the scheme, calling UseDefaultSecurity, and
+// UseMiddleware separately.
+func (g *Group) WithSecurity(name string, scheme *core.SecurityScheme, fn core.MiddlewareFunc) {
+	oapi := g.OpenAPI()
+	if oapi.Components == nil {
+		oapi.Components = &core.Components{}
+	}
+	if oapi.Components.SecuritySchemes == nil {
+		oapi.Components.SecuritySchemes = map[string]*core.SecurityScheme{}
+	}
+	if _, exists := oapi.Components.SecuritySchemes[name]; !exists {
+		oapi.Components.SecuritySchemes[name] = scheme
+	}
+	g.UseDefaultSecurity(name)
+	g.UseMiddleware(fn)
+}
+
 // Config returns the configuration from the underlying API, if available.
 func (g *Group) Config() core.Config {
 	type configProvider interface{ Config() core.Config }
