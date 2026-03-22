@@ -454,10 +454,9 @@ func Register[I, O any](api core.API, op core.Operation, handler func(context.Co
 			status := http.StatusInternalServerError
 			var se core.Error
 			if errors.As(err, &se) {
-				binding.WriteResponseWithPanic(api, ctx, se.StatusCode(), "", se)
-				return
+				status = se.StatusCode()
 			}
-			se = api.ErrorHandler().NewErrorWithContext(ctx, status, "unexpected error occurred", err)
+			se = api.ErrorHandler().NewErrorWithContext(ctx, status, err.Error(), err)
 			binding.WriteResponseWithPanic(api, ctx, se.StatusCode(), "", se)
 			return
 		}

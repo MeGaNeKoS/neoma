@@ -165,7 +165,8 @@ func (e *CustomAppError) StatusCode() int {
 
 func TestHandlerReturnsCustomError(t *testing.T) {
 	// When a handler returns a custom type implementing Error, the
-	// framework should use its status code and serialize the error body.
+	// framework should extract its status code and route the error
+	// through the ErrorHandler envelope.
 	api := newTestAPI(t)
 
 	type Output struct {
@@ -185,10 +186,11 @@ func TestHandlerReturnsCustomError(t *testing.T) {
 	resp := api.Do(http.MethodGet, "/custom-err")
 	assert.Equal(t, http.StatusConflict, resp.Code)
 
+	// The default RFC 9457 handler wraps the error in ProblemDetail.
 	var body map[string]any
 	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
-	assert.Equal(t, "DUPLICATE", body["code"])
-	assert.Equal(t, "resource already exists", body["message"])
+	assert.InDelta(t, 409, body["status"], 0)
+	assert.Equal(t, "resource already exists", body["detail"])
 }
 
 func TestHandlerReturnsErrorWithHeaders(t *testing.T) {
